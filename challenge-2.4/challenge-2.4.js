@@ -57,10 +57,11 @@ app.delete('/messages/:id', (req, res, next) => {
         res.status(404).json({
             "error": `Message ${id} not found`
         });
+        return;
     }
 
     deletedMessage = messages[id];
     delete messages[id];
 
-    res.status(200).json(deletedMessage);
+    res.status(200).json({ "message": "Deleted successfully", "deleted": deletedMessage });
 });
