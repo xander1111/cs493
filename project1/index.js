@@ -109,7 +109,7 @@ app.post('/businesses', (req, res, next) => {
     const requiredFields = ["name", "address", "city", "state", "zip", "phone", "category", "subcategory"]
 
     requiredFields.forEach(field => {
-        if (!field in newBusiness) {
+        if (!(field in newBusiness)) {
             res.status(400).json({ "message": "Invalid business object" })
         }
     });
@@ -139,7 +139,7 @@ app.post('/businesses', (req, res, next) => {
 });
 
 app.patch('/businesses/:id', (req, res, next) => {
-    if (!req.params.id in exampleBusinesses) {
+    if (!(req.params.id in exampleBusinesses)) {
         res.status(404).json({ "message": `No business with id ${req.params.id} found` });
         return;
     }
@@ -190,7 +190,7 @@ app.delete('/businesses/:id', (req, res, next) => {
 
 // Reviews endpoints
 app.get('/businesses/:id/reviews', (req, res, next) => {
-    if (!req.params.id in exampleBusinesses) {
+    if (!(req.params.id in exampleBusinesses)) {
         res.status(404).json({ "message": `No business with id ${req.params.id} found` });
         return;
     }
@@ -251,7 +251,7 @@ app.get('/reviews/:id', (req, res, next) => {
 });
 
 app.post('/businesses/:id/reviews', (req, res, next) => {
-    if (!req.params.id in exampleBusinesses) {
+    if (!(req.params.id in exampleBusinesses)) {
         res.status(404).json({ "message": `No business with id ${req.params.id} found` });
         return;
     }
@@ -260,7 +260,7 @@ app.post('/businesses/:id/reviews', (req, res, next) => {
     const requiredFields = ["rating", "priceRating"]
 
     requiredFields.forEach(field => {
-        if (!field in newReview) {
+        if (!(field in newReview)) {
             res.status(400).json({ "message": "Invalid review object" })
         }
     });
@@ -284,7 +284,7 @@ app.post('/businesses/:id/reviews', (req, res, next) => {
 });
 
 app.patch('/reviews/:id', (req, res, next) => {
-    if (!req.params.id in exampleReviews) {
+    if (!(req.params.id in exampleReviews)) {
         res.status(404).json({ "message": `No review with id ${req.params.id} found` });
         return;
     }
@@ -328,7 +328,7 @@ app.delete('/reviews/:id', (req, res, next) => {
 
 // Photos endpoints
 app.get('/businesses/:id/photos', (req, res, next) => {
-    if (!req.params.id in exampleBusinesses) {
+    if (!(req.params.id in exampleBusinesses)) {
         res.status(404).json({ "message": `No business with id ${req.params.id} found` });
         return;
     }
@@ -389,7 +389,7 @@ app.get('/photos/:id', (req, res, next) => {
 });
 
 app.post('/businesses/:id/photos', (req, res, next) => {
-    if (!req.params.id in exampleBusinesses) {
+    if (!(req.params.id in exampleBusinesses)) {
         res.status(404).json({ "message": `No business with id ${req.params.id} found` });
         return;
     }
@@ -414,7 +414,7 @@ app.post('/businesses/:id/photos', (req, res, next) => {
 });
 
 app.patch('/photos/:id', (req, res, next) => {
-    if (!req.params.id in examplePhotos) {
+    if (!(req.params.id in examplePhotos)) {
         res.status(404).json({ "message": `No photo with id ${req.params.id} found` });
         return;
     }

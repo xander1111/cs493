@@ -44,6 +44,14 @@ request_json \
         "links":{"reviews":"/businesses/6/reviews","photos":"/businesses/6/photos"}
     }'
 
+request_json \
+    "GET /businesses/:id with invalid id" \
+    GET \
+    'http://localhost:8086/businesses/12345678901234567890' \
+    '' \
+    404 \
+    '{ "message": "No business with id 12345678901234567890 found" }'
+
 
 request_json \
     "POST /businesses" \
@@ -82,6 +90,16 @@ request_json \
         "link": ".*"
     }'
 
+request_json \
+    "POST /businesses with invalid data" \
+    POST \
+    'http://localhost:8086/businesses' \
+    '{
+        "example": "example"
+    }' \
+    400 \
+    '{ "message": "Invalid business object" }'
+
 
 request_json \
     "PATCH /businesses/:id" \
@@ -113,6 +131,14 @@ request_json \
         "link": ".*"
     }'
 
+request_json \
+    "PATCH /businesses/:id with invalid id" \
+    PATCH \
+    'http://localhost:8086/businesses/12345678901234567890' \
+    '' \
+    404 \
+    '{ "message": "No business with id 12345678901234567890 found" }'
+
 
 request_json \
     "DELETE /businesses/:id" \
@@ -138,17 +164,24 @@ request_json \
         }
     }'
 
+request_json \
+    "DELETE /businesses/:id with invalid id" \
+    DELETE \
+    'http://localhost:8086/businesses/12345678901234567890' \
+    '' \
+    404 \
+    '{ "message": "No business with id 12345678901234567890 found" }'
+
 
 
 # Reviews endpoints
 request_json \
-    "TEST" \
+    "GET /businesses/:id/reviews with an invalid business id" \
     GET \
-    'http://localhost:8086/businesses/1/reviews' \
+    'http://localhost:8086/businesses/12345678901234567890/reviews' \
     '' \
-    200 \
-    '".*"'
-
+    404 \
+    '{ "message": "No business with id 12345678901234567890 found" }'
 
 request_json \
     "'GET /businesses/:id/reviews' returns page 1" \
@@ -157,6 +190,7 @@ request_json \
     '' \
     200 \
     '{"pageNumber":"1","totalPages":".*","pageSize":".*","totalCount":".*","reviews":".*","links":".*"}'
+
 
 lastPage=$(extract_field 'totalPages')
 
@@ -206,6 +240,14 @@ request_json \
         }
     }'
 
+request_json \
+    "GET /reviews/:id with invalid id" \
+    GET \
+    'http://localhost:8086/reviews/12345678901234567890' \
+    '' \
+    404 \
+    '{ "message": "No review with id 12345678901234567890 found" }'
+
 
 request_json \
     "POST /businesses/:id/reviews" \
@@ -232,6 +274,24 @@ request_json \
         "link": ".*"
     }'
 
+request_json \
+    "POST /businesses/:id/reviews with invalid data" \
+    POST \
+    'http://localhost:8086/businesses/1/reviews' \
+    '{
+        "example": "example"
+    }' \
+    400 \
+    '{ "message": "Invalid review object" }'
+
+request_json \
+    "POST /businesses/:id/reviews with invalid business id" \
+    POST \
+    'http://localhost:8086/businesses/12345678901234567890/reviews' \
+    '' \
+    404 \
+    '{ "message": "No business with id 12345678901234567890 found" }'
+
 
 request_json \
     "PATCH /reviews/:id" \
@@ -257,6 +317,14 @@ request_json \
         "link": ".*"
     }'
 
+request_json \
+    "PATCH /reviews/:id with invalid id" \
+    PATCH \
+    'http://localhost:8086/reviews/12345678901234567890' \
+    '' \
+    404 \
+    '{ "message": "No review with id 12345678901234567890 found" }'
+
 
 request_json \
     "DELETE /reviews/:id" \
@@ -277,9 +345,26 @@ request_json \
         }
     }'
 
+request_json \
+    "DELETE /reviews/:id with invalid id" \
+    DELETE \
+    'http://localhost:8086/reviews/12345678901234567890' \
+    '' \
+    404 \
+    '{ "message": "No review with id 12345678901234567890 found" }'
+
 
 
 # Photos endpoints
+request_json \
+    "GET /businesses/:id/photos with an invalid business id" \
+    GET \
+    'http://localhost:8086/businesses/12345678901234567890/photos' \
+    '' \
+    404 \
+    '{ "message": "No business with id 12345678901234567890 found" }'
+
+
 request_json \
     "'GET /businesses/:id/photos' returns page 1" \
     GET \
@@ -335,6 +420,14 @@ request_json \
         }
     }'
 
+request_json \
+    "GET /photos/:id with invalid id" \
+    GET \
+    'http://localhost:8086/photos/12345678901234567890' \
+    '' \
+    404 \
+    '{ "message": "No photo with id 12345678901234567890 found" }'
+
 
 request_json \
     "POST /businesses/:id/photos" \
@@ -358,6 +451,14 @@ request_json \
         },
         "link": ".*"
     }'
+
+request_json \
+    "POST /businesses/:id/photos with invalid business id" \
+    POST \
+    'http://localhost:8086/businesses/12345678901234567890/photos' \
+    '' \
+    404 \
+    '{ "message": "No business with id 12345678901234567890 found" }'
 
 
 request_json \
@@ -383,6 +484,14 @@ request_json \
         "link": ".*"
     }'
 
+request_json \
+    "PATCH /photos/:id with invalid id" \
+    PATCH \
+    'http://localhost:8086/photos/12345678901234567890' \
+    '' \
+    404 \
+    '{ "message": "No photo with id 12345678901234567890 found" }'
+
 
 request_json \
     "DELETE /photos/:id" \
@@ -401,3 +510,11 @@ request_json \
             "links": ".*"
         }
     }'
+
+request_json \
+    "DELETE /photos/:id with invalid id" \
+    DELETE \
+    'http://localhost:8086/photos/12345678901234567890' \
+    '' \
+    404 \
+    '{ "message": "No photo with id 12345678901234567890 found" }'
