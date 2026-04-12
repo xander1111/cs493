@@ -68,8 +68,34 @@ app.get('/businesses/:id', (req, res, next) => {
     }
 });
 
-app.post('/businesses', (req, res, next) => {
-    // TODO
+app.post('/businesses', (req, res, next) => {    
+    const newBusiness = req.body
+    const requiredFields = ["name", "address", "city", "state", "zip", "phone", "category", "subcategory"]
+
+    requiredFields.forEach(field => {
+        if (!field in newBusiness) {
+            res.status(400).json({ "message": "Invalid business object" })
+        }
+    });
+
+    // Placeholder, doesn't actually store data
+    res.status(201).json({
+        "id": 26,
+        "name": newBusiness.name,
+        "address": newBusiness.address,
+        "city": newBusiness.city,
+        "state": newBusiness.state,
+        "zip": newBusiness.zip,
+        "phone": newBusiness.phone,
+        "category": newBusiness.category,
+        "subcategory": newBusiness.subcategory,
+        "website": newBusiness.website === undefined ? null : newBusiness.website,
+        "email": newBusiness.email === undefined ? null : newBusiness.website,
+        "links": {
+            "reviews": "/businesses/26/reviews",
+            "photos": "/businesses/26/photos"
+        }
+    });
 });
 
 app.patch('/businesses/:id', (req, res, next) => {
