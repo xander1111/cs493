@@ -12,10 +12,10 @@ app.listen(port, () => {
 
 
 // Generate placeholder example data
-const example_businesses = {};
-const example_business_ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 21, 22, 23, 24, 25]
-example_business_ids.forEach(id => {
-    example_businesses[id] = {
+const exampleBusinesses = {};
+const exampleBusinessIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 21, 22, 23, 24, 25]
+exampleBusinessIds.forEach(id => {
+    exampleBusinesses[id] = {
         "id": id,
         "name": `Example business ${id}`,
         "address": "123 Main St",
@@ -39,19 +39,19 @@ example_business_ids.forEach(id => {
 app.get('/businesses', (req, res, next) => {
     const pageNumber = isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
 
-    const totalPages = Math.ceil(example_business_ids.length / 10);
-    const business_ids = example_business_ids.slice((pageNumber - 1) * 10, pageNumber * 10);
+    const totalPages = Math.ceil(exampleBusinessIds.length / 10);
+    const businessIds = exampleBusinessIds.slice((pageNumber - 1) * 10, pageNumber * 10);
     const businesses = [];
 
-    business_ids.forEach(id => {
-        businesses.push(example_businesses[id])
+    businessIds.forEach(id => {
+        businesses.push(exampleBusinesses[id])
     })
 
     res.status(200).json({
         "pageNumber": pageNumber,
         "totalPages": totalPages,
         "pageSize": 10,
-        "totalCount": example_business_ids.length,
+        "totalCount": exampleBusinessIds.length,
         "businesses": businesses,
         "links": {
             "nextPage": pageNumber < totalPages ? `/businesses?page=${pageNumber + 1}` : undefined,
@@ -61,8 +61,8 @@ app.get('/businesses', (req, res, next) => {
 });
 
 app.get('/businesses/:id', (req, res, next) => {
-    if (req.params.id in example_businesses) {
-        res.status(200).json(example_businesses[req.params.id]);
+    if (req.params.id in exampleBusinesses) {
+        res.status(200).json(exampleBusinesses[req.params.id]);
     } else {
         res.status(404).json({ "message": `No business with id ${req.params.id} found` });
     }
@@ -99,7 +99,33 @@ app.post('/businesses', (req, res, next) => {
 });
 
 app.patch('/businesses/:id', (req, res, next) => {
-    // TODO
+    if (!req.params.id in exampleBusinesses) {
+        res.status(404).json({ "message": `No business with id ${req.params.id} found` });
+        return;
+    }
+
+    const updatedFields = req.body;
+    const oldBusiness = exampleBusinesses[req.params.id];
+
+    let updatedBusiness = {
+        "id": req.params.id,
+        "name": updatedFields.name ?? oldBusiness.name,
+        "address": updatedFields.address ?? oldBusiness.address,
+        "city": updatedFields.city ?? oldBusiness.city,
+        "state": updatedFields.state ?? oldBusiness.state,
+        "zip": updatedFields.zip ?? oldBusiness.zip,
+        "phone": updatedFields.phone ?? oldBusiness.phone,
+        "category": updatedFields.category ?? oldBusiness.category,
+        "subcategory": updatedFields.subcategory ?? oldBusiness.subcategory,
+        "website": updatedFields.website ?? oldBusiness.website,
+        "email": updatedFields.email ?? oldBusiness.email,
+        "links": {
+            "reviews": `/businesses/${req.params.id}/reviews`,
+            "photos": `/businesses/${req.params.id}/photos`
+        }
+    };
+
+    res.status(200).json(updatedBusiness);
 });
 
 app.delete('/businesses/:id', (req, res, next) => {

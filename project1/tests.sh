@@ -29,7 +29,20 @@ request_json \
     'http://localhost:8086/businesses/6' \
     '' \
     200 \
-    '{"id":"6","name":".*","address":".*","city":".*","state":".*","zip":".*","phone":".*","category":".*","subcategory":".*","website":".*","email":".*","links":{"reviews":"/businesses/6/reviews","photos":"/businesses/6/photos"}}'
+    '{
+        "id":"6",
+        "name":".*",
+        "address":".*",
+        "city":".*",
+        "state":".*",
+        "zip":".*",
+        "phone":".*",
+        "category":".*",
+        "subcategory":".*",
+        "website":".*",
+        "email":".*",
+        "links":{"reviews":"/businesses/6/reviews","photos":"/businesses/6/photos"}
+    }'
 
 request_json \
     "POST /businesses" \
@@ -56,4 +69,29 @@ request_json \
         "category": "store",
         "subcategory": "clothing",
     "website":".*","email":".*","links":{"reviews":".*","photos":".*"}}'
+
+
+
+request_json \
+    "PATCH /businesses/:id" \
+    PATCH \
+    'http://localhost:8086/businesses/5' \
+    '{
+        "email": "exampleUpdatedEmail@example.com"
+    }' \
+    200 \
+    '{
+        "id": "5",
+        "name": ".*",
+        "address": ".*",
+        "city": ".*",
+        "state": ".*",
+        "zip": ".*",
+        "phone": ".*",
+        "category": ".*",
+        "subcategory": ".*",
+        "website": ".*",
+        "email": "exampleUpdatedEmail@example.com",
+        "links": ".*"
+    }'
 
