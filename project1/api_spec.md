@@ -170,7 +170,7 @@ Example return:
 Example return if the user is not authenticated, or if the user is not the owner of the business:
 ```json
 {
-    "message": "User not userized"
+    "message": "User not authorized"
 }
 ```
 

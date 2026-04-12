@@ -107,6 +107,7 @@ app.patch('/businesses/:id', (req, res, next) => {
     const updatedFields = req.body;
     const oldBusiness = exampleBusinesses[req.params.id];
 
+    // Placeholder, doesn't actually update data
     let updatedBusiness = {
         "id": req.params.id,
         "name": updatedFields.name ?? oldBusiness.name,
@@ -129,7 +130,15 @@ app.patch('/businesses/:id', (req, res, next) => {
 });
 
 app.delete('/businesses/:id', (req, res, next) => {
-    // TODO
+    if (req.params.id in exampleBusinesses) {
+        // Placeholder, doesn't actually delete data
+        res.status(200).json({
+            "message": "deleted successfully",
+            "deleted": exampleBusinesses[req.params.id]
+        });
+    } else {
+        res.status(404).json({ "message": `No business with id ${req.params.id} found` });
+    }
 });
 
 

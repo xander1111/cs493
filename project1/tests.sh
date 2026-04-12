@@ -44,6 +44,7 @@ request_json \
         "links":{"reviews":"/businesses/6/reviews","photos":"/businesses/6/photos"}
     }'
 
+
 request_json \
     "POST /businesses" \
     POST \
@@ -71,7 +72,6 @@ request_json \
     "website":".*","email":".*","links":{"reviews":".*","photos":".*"}}'
 
 
-
 request_json \
     "PATCH /businesses/:id" \
     PATCH \
@@ -93,5 +93,30 @@ request_json \
         "website": ".*",
         "email": "exampleUpdatedEmail@example.com",
         "links": ".*"
+    }'
+
+
+request_json \
+    "DELETE /businesses/:id" \
+    DELETE \
+    'http://localhost:8086/businesses/5' \
+    '' \
+    200 \
+    '{
+        "message": "deleted successfully",
+        "deleted": {
+            "id": "5",
+            "name": ".*",
+            "address": ".*",
+            "city": ".*",
+            "state": ".*",
+            "zip": ".*",
+            "phone": ".*",
+            "category": ".*",
+            "subcategory": ".*",
+            "website": ".*",
+            "email": ".*",
+            "links": ".*"
+        }
     }'
 
