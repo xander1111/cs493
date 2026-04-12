@@ -518,9 +518,9 @@ Example return:
 ```
 
 
-### `DELETE /reviews/:id`
+### `DELETE /photos/:id`
 
-Removes an exising review. Requires the user to be authenticated and to be the owner of the photo.
+Removes an exising photo. Requires the user to be authenticated and to be the owner of the photo.
 
 Example return:
 ```json
