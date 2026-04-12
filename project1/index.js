@@ -10,8 +10,12 @@ app.listen(port, () => {
     console.log(`Server is listening on port ${port}`);
 });
 
-function get_example_business(id = 1) {
-    return {
+
+// Generate placeholder example data
+const example_businesses = {};
+const example_business_ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 21, 22, 23, 24, 25]
+example_business_ids.forEach(id => {
+    example_businesses[id] = {
         "id": id,
         "name": `Example business ${id}`,
         "address": "123 Main St",
@@ -22,48 +26,46 @@ function get_example_business(id = 1) {
         "category": "store",
         "subcategory": "clothing",
         "website": "example.com",
-        "email": null,
+        "email": `business${id}@example.com`,
         "links": {
             "reviews": `/businesses/${id}/reviews`,
             "photos": `/businesses/${id}/photos`
         }
-    }
-}
+    };
+})
 
 
 // Businesses endpoints
 app.get('/businesses', (req, res, next) => {
     const pageNumber = isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
 
-    // Placeholder example data
+    const totalPages = Math.ceil(example_business_ids.length / 10);
+    const business_ids = example_business_ids.slice((pageNumber - 1) * 10, pageNumber * 10);
     const businesses = [];
-    if (pageNumber == 1) {
-        for (let i = 1; i <= 10; i++) {
-            businesses.push(get_example_business(i));
-        }
-    } else if (pageNumber == 2) {
-        for (let i = 11; i <= 15; i++) {
-            businesses.push(get_example_business(i));
-        }
-    }
 
-
+    business_ids.forEach(id => {
+        businesses.push(example_businesses[id])
+    })
 
     res.status(200).json({
         "pageNumber": pageNumber,
-        "totalPages": 2,
+        "totalPages": totalPages,
         "pageSize": 10,
-        "totalCount": 15,
+        "totalCount": example_business_ids.length,
         "businesses": businesses,
         "links": {
-            "nextPage": pageNumber < 2 ? "/businesses?page=2" : undefined,
-            "lastPage": "/businesses?page=2"
+            "nextPage": pageNumber < totalPages ? `/businesses?page=${pageNumber + 1}` : undefined,
+            "lastPage": `/businesses?page=${totalPages}`
         }
     });
 });
 
 app.get('/businesses/:id', (req, res, next) => {
-    // TODO
+    if (req.params.id in example_businesses) {
+        res.status(200).json(example_businesses[req.params.id]);
+    } else {
+        res.status(404).json({ "message": `No business with id ${req.params.id} found` });
+    }
 });
 
 app.post('/businesses', (req, res, next) => {
