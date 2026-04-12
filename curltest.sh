@@ -230,11 +230,10 @@ request() {
 
     status "$message" "$method $url"
 
-    case "$method" in
-        PUT|PATCH|DELETE)
-            methodarg="-X $method"
-            ;;
-    esac
+    # Updated this so it always specifies the method. When it was only updating for PUT, PATCH, and DELETE, it made it so running a
+    # test with one of those methods would cause any further tests run with a different method to use the wrong method. 
+    methodarg="-X $method"
+
 
     case "$method" in
         POST|PUT|PATCH|DELETE)
