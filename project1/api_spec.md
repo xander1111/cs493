@@ -18,7 +18,7 @@ Example return:
     "totalCount": 97,
     "businesses": [
         {
-            "id": 1
+            "id": 1,
             "name": "Example business 1",
             "address": "123 Main St",
             "city": "Bend",
@@ -36,7 +36,7 @@ Example return:
         },
         ...
         {
-            "id": 10
+            "id": 10,
             "name": "My cool business",
             "address": "123 Main St",
             "city": "Bend",
@@ -45,7 +45,7 @@ Example return:
             "phone": "5555555555",
             "category": "store",
             "subcategory": "clothing",
-            "website": null
+            "website": null,
             "email": null,
             "links": {
                 "reviews": "/businesses/10/reviews",
