@@ -182,20 +182,23 @@ Removes an existing business. Requires the user to be authenticated and to be th
 Example return:
 ```json
 {
-    "id": 10,
-    "name": "My cool business",
-    "address": "123 Main St",
-    "city": "Bend",
-    "state": "Oregon",
-    "zip": "97702",
-    "phone": "5555555555",
-    "category": "store",
-    "subcategory": "clothing",
-    "website": null,
-    "email": null,
-    "links": {
-        "reviews": "/businesses/10/reviews",
-        "photos": "/businesses/10/photos"
+    "message": "deleted successfully",
+    "deleted": {
+        "id": 10,
+        "name": "My cool business",
+        "address": "123 Main St",
+        "city": "Bend",
+        "state": "Oregon",
+        "zip": "97702",
+        "phone": "5555555555",
+        "category": "store",
+        "subcategory": "clothing",
+        "website": null,
+        "email": null,
+        "links": {
+            "reviews": "/businesses/10/reviews",
+            "photos": "/businesses/10/photos"
+        }
     }
 }
 ```
@@ -361,14 +364,17 @@ Removes an exising review. Requires the user to be authenticated and to be the u
 Example return:
 ```json
 {
-    "id": 2934,
-    "business": 73,
-    "user": 6,
-    "rating": 4,
-    "priceRating": 4,
-    "comment": null,
-    "links": {
-        "business": "/businesses/73"
+    "message": "deleted successfully",
+    "deleted": {
+        "id": 2934,
+        "business": 73,
+        "user": 6,
+        "rating": 4,
+        "priceRating": 4,
+        "comment": null,
+        "links": {
+            "business": "/businesses/73"
+        }
     }
 }
 ```
@@ -519,13 +525,16 @@ Removes an exising review. Requires the user to be authenticated and to be the o
 Example return:
 ```json
 {
-    "id": 712,
-    "business": 16,
-    "user": 85,
-    "imageUrl": "/photos/712",
-    "caption": "Example caption",
-    "links": {
-        "business": "/businesses/16"
+    "message": "deleted successfully",
+    "deleted": {
+        "id": 712,
+        "business": 16,
+        "user": 85,
+        "imageUrl": "/photos/712",
+        "caption": "Example caption",
+        "links": {
+            "business": "/businesses/16"
+        }
     }
 }
 ```
