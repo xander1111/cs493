@@ -116,21 +116,25 @@ Example request data:
 Example return:
 ```json
 {
-    "id": 10,
-    "name": "My cool business",
-    "address": "123 Main St",
-    "city": "Bend",
-    "state": "Oregon",
-    "zip": "97702",
-    "phone": "5555555555",
-    "category": "store",
-    "subcategory": "clothing",
-    "website": null,
-    "email": null,
-    "links": {
-        "reviews": "/businesses/10/reviews",
-        "photos": "/businesses/10/photos"
-    }
+    "message": "successfully created",
+    "business": {
+        "id": 10,
+        "name": "My cool business",
+        "address": "123 Main St",
+        "city": "Bend",
+        "state": "Oregon",
+        "zip": "97702",
+        "phone": "5555555555",
+        "category": "store",
+        "subcategory": "clothing",
+        "website": null,
+        "email": null,
+        "links": {
+            "reviews": "/businesses/10/reviews",
+            "photos": "/businesses/10/photos"
+        }
+    },
+    "link": "/businesses/10"
 }
 ```
 
@@ -149,21 +153,25 @@ Example request data:
 Example return:
 ```json
 {
-    "id": 10,
-    "name": "My cool business",
-    "address": "123 Main St",
-    "city": "Bend",
-    "state": "Oregon",
-    "zip": "97702",
-    "phone": "5555555",
-    "category": "store",
-    "subcategory": "clothing",
-    "website": null,
-    "email": "example@example.com",
-    "links": {
-        "reviews": "/businesses/10/reviews",
-        "photos": "/businesses/10/photos"
-    }
+    "message": "successfully updated",
+    "business": {
+        "id": 10,
+        "name": "My cool business",
+        "address": "123 Main St",
+        "city": "Bend",
+        "state": "Oregon",
+        "zip": "97702",
+        "phone": "5555555555",
+        "category": "store",
+        "subcategory": "clothing",
+        "website": null,
+        "email": "example@example.com",
+        "links": {
+            "reviews": "/businesses/10/reviews",
+            "photos": "/businesses/10/photos"
+        }
+    },
+    "link": "/businesses/10"
 }
 ```
 
@@ -329,16 +337,20 @@ Example request data:
 
 Example return:
 ```json
-{
-    "id": 2934,
-    "business": 73,
-    "user": 6,
-    "rating": 3,
-    "priceRating": 4,
-    "comment": null,
-    "links": {
-        "business": "/businesses/73"
-    }
+{    
+    "message": "successfully created",
+    "review": {
+        "id": 2934,
+        "business": 10,
+        "user": 6,
+        "rating": 3,
+        "priceRating": 4,
+        "comment": null,
+        "links": {
+            "business": "/businesses/10"
+        }
+    },
+    "link": "/reviews/2934"
 }
 ```
 
@@ -346,7 +358,18 @@ Example return if the user already has a review for the business:
 ```json
 {
     "message": "User already has a review for business [id]",
-    "id": 2934
+    "review": {
+        "id": 2934,
+        "business": 10,
+        "user": 6,
+        "rating": 3,
+        "priceRating": 4,
+        "comment": null,
+        "links": {
+            "business": "/businesses/10"
+        }
+    },
+    "link": "/reviews/2934"
 }
 ```
 
@@ -364,16 +387,20 @@ Example request data:
 
 Example return:
 ```json
-{
-    "id": 2934,
-    "business": 73,
-    "user": 6,
-    "rating": 4,
-    "priceRating": 4,
-    "comment": null,
-    "links": {
-        "business": "/businesses/73"
-    }
+{    
+    "message": "successfully updated",
+    "review": {
+        "id": 2934,
+        "business": 10,
+        "user": 6,
+        "rating": 4,
+        "priceRating": 4,
+        "comment": null,
+        "links": {
+            "business": "/businesses/10"
+        }
+    },
+    "link": "/reviews/2934"
 }
 ```
 
@@ -419,7 +446,7 @@ Example return:
             "id": 14,
             "business": 10,
             "user": 14,
-            "imageUrl": "/photos/14",
+            "imageUrl": "/photoData/14",
             "caption": null,
             "links": {
                 "business": "/businesses/10"
@@ -430,7 +457,7 @@ Example return:
             "id": 32,
             "business": 10,
             "user": 29,
-            "imageUrl": "/photos/32",
+            "imageUrl": "/photoData/32",
             "caption": "Example caption",
             "links": {
                 "business": "/businesses/10"
@@ -457,15 +484,15 @@ Example return:
     "totalPages": 1,
     "pageSize": 10,
     "totalCount": 6,
-    "reviews": [
+    "photos": [
         {
             "id": 3,
             "business": 7,
             "user": 85,
-            "imageUrl": "/photos/3",
+            "imageUrl": "/photoData/3",
             "caption": null,
             "links": {
-                "business": "/businesses/10"
+                "business": "/businesses/7"
             }
         },
         ...
@@ -473,16 +500,35 @@ Example return:
             "id": 15,
             "business": 51,
             "user": 85,
-            "imageUrl": "/photos/15",
+            "imageUrl": "/photoData/15",
             "caption": null,
             "links": {
-                "business": "/businesses/10"
+                "business": "/businesses/51"
             }
         }
     ],
     "links": {
         "nextPage": "/reviews?page=2",
         "lastPage": "/reviews?page=2"
+    }
+}
+```
+
+### `GET /photos/:id`
+
+Gets a specific photo
+
+
+Example return:
+```json
+{
+    "id": 3,
+    "business": 7,
+    "user": 85,
+    "imageUrl": "/photoData/3",
+    "caption": null,
+    "links": {
+        "business": "/businesses/7"
     }
 }
 ```
@@ -501,15 +547,19 @@ Example request JSON data:
 
 Example return:
 ```json
-{
-    "id": 712,
-    "business": 16,
-    "user": 85,
-    "imageUrl": "/photos/712",
-    "caption": "Example caption",
-    "links": {
-        "business": "/businesses/16"
-    }
+{    
+    "message": "successfully created",
+    "photo": {
+        "id": 712,
+        "business": 16,
+        "user": 85,
+        "imageUrl": "/photoData/712",
+        "caption": "Example caption",
+        "links": {
+            "business": "/businesses/16"
+        }
+    },
+    "link": "/photos/712"
 }
 ```
 
@@ -526,15 +576,19 @@ Example request data:
 
 Example return:
 ```json
-{
-    "id": 712,
-    "business": 16,
-    "user": 85,
-    "imageUrl": "/photos/712",
-    "caption": "New caption",
-    "links": {
-        "business": "/businesses/16"
-    }
+{    
+    "message": "successfully updated",
+    "photo": {
+        "id": 712,
+        "business": 16,
+        "user": 85,
+        "imageUrl": "/photoData/712",
+        "caption": "New caption",
+        "links": {
+            "business": "/businesses/16"
+        }
+    },
+    "link": "/photos/712"
 }
 ```
 
@@ -551,7 +605,7 @@ Example return:
         "id": 712,
         "business": 16,
         "user": 85,
-        "imageUrl": "/photos/712",
+        "imageUrl": "/photoData/712",
         "caption": "Example caption",
         "links": {
             "business": "/businesses/16"

@@ -12,6 +12,8 @@ app.listen(port, () => {
 
 
 // Generate placeholder example data
+
+// Example business data
 const exampleBusinesses = {};
 const exampleBusinessIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 21, 22, 23, 24, 25]
 exampleBusinessIds.forEach(id => {
@@ -33,6 +35,40 @@ exampleBusinessIds.forEach(id => {
         }
     };
 })
+
+// Example review data
+const exampleReviews = {};
+const exampleReviewIds = [1, 2, 3, 4, 5, 10, 11, 12, 13, 14, 15]
+exampleReviewIds.forEach(id => {
+    exampleReviews[id] = {
+        "id": id,
+        "business": id % 5 + 1,
+        "user": id % 3 + 1,
+        "rating": 3,
+        "priceRating": 3,
+        "comment": `Example review #${id}`,
+        "links": {
+            "business": `/businesses/${id % 5 + 1}`
+        }
+    };
+})
+
+// Example photo data
+const examplePhotos = {};
+const examplePhotoIds = [1, 2, 3, 14, 15]
+examplePhotoIds.forEach(id => {
+    examplePhotos[id] = {
+        "id": id,
+        "business": id % 5 + 1,
+        "user": id % 3 + 1,
+        "imageUrl": `/photoData/${id}`,
+        "caption": `Example photo #${id}`,
+        "links": {
+            "business": `/businesses/${id}`
+        }
+    };
+})
+
 
 
 // Businesses endpoints
@@ -68,7 +104,7 @@ app.get('/businesses/:id', (req, res, next) => {
     }
 });
 
-app.post('/businesses', (req, res, next) => {    
+app.post('/businesses', (req, res, next) => {
     const newBusiness = req.body
     const requiredFields = ["name", "address", "city", "state", "zip", "phone", "category", "subcategory"]
 
@@ -80,21 +116,25 @@ app.post('/businesses', (req, res, next) => {
 
     // Placeholder, doesn't actually store data
     res.status(201).json({
-        "id": 26,
-        "name": newBusiness.name,
-        "address": newBusiness.address,
-        "city": newBusiness.city,
-        "state": newBusiness.state,
-        "zip": newBusiness.zip,
-        "phone": newBusiness.phone,
-        "category": newBusiness.category,
-        "subcategory": newBusiness.subcategory,
-        "website": newBusiness.website === undefined ? null : newBusiness.website,
-        "email": newBusiness.email === undefined ? null : newBusiness.website,
-        "links": {
-            "reviews": "/businesses/26/reviews",
-            "photos": "/businesses/26/photos"
-        }
+        "message": "successfully created",
+        "business": {
+            "id": 26,
+            "name": newBusiness.name,
+            "address": newBusiness.address,
+            "city": newBusiness.city,
+            "state": newBusiness.state,
+            "zip": newBusiness.zip,
+            "phone": newBusiness.phone,
+            "category": newBusiness.category,
+            "subcategory": newBusiness.subcategory,
+            "website": newBusiness.website === undefined ? null : newBusiness.website,
+            "email": newBusiness.email === undefined ? null : newBusiness.website,
+            "links": {
+                "reviews": "/businesses/26/reviews",
+                "photos": "/businesses/26/photos"
+            }
+        },
+        "link": `/businesses/26`
     });
 });
 
@@ -126,7 +166,12 @@ app.patch('/businesses/:id', (req, res, next) => {
         }
     };
 
-    res.status(200).json(updatedBusiness);
+    // Placeholder, doesn't actually update data
+    res.status(200).json({
+        "message": "successfully updated",
+        "business": updatedBusiness,
+        "link": `/businesses/${req.params.id}`
+    });
 });
 
 app.delete('/businesses/:id', (req, res, next) => {
@@ -145,44 +190,265 @@ app.delete('/businesses/:id', (req, res, next) => {
 
 // Reviews endpoints
 app.get('/businesses/:id/reviews', (req, res, next) => {
-    // TODO
+    if (!req.params.id in exampleBusinesses) {
+        res.status(404).json({ "message": `No business with id ${req.params.id} found` });
+        return;
+    }
+
+    const pageNumber = isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
+
+    const totalPages = Math.ceil(exampleReviewIds.length / 10);
+    const reviewIds = exampleReviewIds.slice((pageNumber - 1) * 10, pageNumber * 10);
+    const reviews = [];
+
+    reviewIds.forEach(id => {
+        reviews.push(examplePhotos[id])
+    })
+
+    res.status(200).json({
+        "pageNumber": pageNumber,
+        "totalPages": totalPages,
+        "pageSize": 10,
+        "totalCount": exampleReviewIds.length,
+        "reviews": reviews,
+        "links": {
+            "nextPage": pageNumber < totalPages ? `/businesses/${req.params.id}/reviews?page=${pageNumber + 1}` : undefined,
+            "lastPage": `/businesses/${req.params.id}/reviews?page=${totalPages}`
+        }
+    });
 });
 
 app.get('/reviews', (req, res, next) => {
-    // TODO
+    const pageNumber = isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
+
+    const totalPages = Math.ceil(exampleReviewIds.length / 10);
+    const reviewIds = exampleReviewIds.slice((pageNumber - 1) * 10, pageNumber * 10);
+    const reviews = [];
+
+    reviewIds.forEach(id => {
+        reviews.push(exampleReviews[id])
+    })
+
+    res.status(200).json({
+        "pageNumber": pageNumber,
+        "totalPages": totalPages,
+        "pageSize": 10,
+        "totalCount": exampleReviewIds.length,
+        "reviews": reviews,
+        "links": {
+            "nextPage": pageNumber < totalPages ? `/reviews?page=${pageNumber + 1}` : undefined,
+            "lastPage": `/reviews?page=${totalPages}`
+        }
+    });
+});
+
+app.get('/reviews/:id', (req, res, next) => {
+    if (req.params.id in exampleReviews) {
+        res.status(200).json(exampleReviews[req.params.id]);
+    } else {
+        res.status(404).json({ "message": `No review with id ${req.params.id} found` });
+    }
 });
 
 app.post('/businesses/:id/reviews', (req, res, next) => {
-    // TODO
+    if (!req.params.id in exampleBusinesses) {
+        res.status(404).json({ "message": `No business with id ${req.params.id} found` });
+        return;
+    }
+
+    const newReview = req.body
+    const requiredFields = ["rating", "priceRating"]
+
+    requiredFields.forEach(field => {
+        if (!field in newReview) {
+            res.status(400).json({ "message": "Invalid review object" })
+        }
+    });
+
+    // Placeholder, doesn't actually store data
+    res.status(201).json({
+        "message": "successfully created",
+        "review": {
+            "id": 2934,
+            "business": req.params.id,
+            "user": 6,
+            "rating": newReview.rating,
+            "priceRating": newReview.priceRating,
+            "comment": newReview.comment === undefined ? null : newReview.comment,
+            "links": {
+                "business": `/businesses/${req.params.id}`
+            }
+        },
+        "link": `/reviews/2934`
+    });
 });
 
 app.patch('/reviews/:id', (req, res, next) => {
-    // TODO
+    if (!req.params.id in exampleReviews) {
+        res.status(404).json({ "message": `No review with id ${req.params.id} found` });
+        return;
+    }
+
+    const updatedFields = req.body;
+    const oldReview = exampleReviews[req.params.id];
+
+    // Placeholder, doesn't actually update data
+    let updatedReview = {
+        "id": req.params.id,
+        "business": oldReview.business,
+        "user": oldReview.user,
+        "rating": updatedFields.rating ?? oldReview.rating,
+        "priceRating": updatedFields.priceRating ?? oldReview.priceRating,
+        "comment": updatedFields.comment ?? oldReview.comment,
+        "links": {
+            "business": `/businesses/${req.params.id}`
+        }
+    };
+
+    res.status(200).json({
+        "message": "successfully updated",
+        "review": updatedReview,
+        "link": `/reviews/${req.params.id}`
+    });
 });
 
 app.delete('/reviews/:id', (req, res, next) => {
-    // TODO
+    if (req.params.id in exampleReviews) {
+        // Placeholder, doesn't actually delete data
+        res.status(200).json({
+            "message": "deleted successfully",
+            "deleted": exampleReviews[req.params.id]
+        });
+    } else {
+        res.status(404).json({ "message": `No review with id ${req.params.id} found` });
+    }
 });
 
 
 
 // Photos endpoints
 app.get('/businesses/:id/photos', (req, res, next) => {
-    // TODO
+    if (!req.params.id in exampleBusinesses) {
+        res.status(404).json({ "message": `No business with id ${req.params.id} found` });
+        return;
+    }
+
+    const pageNumber = isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
+
+    const totalPages = Math.ceil(examplePhotoIds.length / 10);
+    const photoIds = examplePhotoIds.slice((pageNumber - 1) * 10, pageNumber * 10);
+    const photos = [];
+
+    photoIds.forEach(id => {
+        photos.push(examplePhotos[id])
+    })
+
+    res.status(200).json({
+        "pageNumber": pageNumber,
+        "totalPages": totalPages,
+        "pageSize": 10,
+        "totalCount": examplePhotoIds.length,
+        "photos": photos,
+        "links": {
+            "nextPage": pageNumber < totalPages ? `/businesses/${req.params.id}/photos?page=${pageNumber + 1}` : undefined,
+            "lastPage": `/businesses/${req.params.id}/photos?page=${totalPages}`
+        }
+    });
 });
 
 app.get('/photos', (req, res, next) => {
-    // TODO
+    const pageNumber = isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
+
+    const totalPages = Math.ceil(examplePhotoIds.length / 10);
+    const photoIds = examplePhotoIds.slice((pageNumber - 1) * 10, pageNumber * 10);
+    const photos = [];
+
+    photoIds.forEach(id => {
+        photos.push(examplePhotos[id])
+    })
+
+    res.status(200).json({
+        "pageNumber": pageNumber,
+        "totalPages": totalPages,
+        "pageSize": 10,
+        "totalCount": examplePhotoIds.length,
+        "photos": photos,
+        "links": {
+            "nextPage": pageNumber < totalPages ? `/photos?page=${pageNumber + 1}` : undefined,
+            "lastPage": `/photos?page=${totalPages}`
+        }
+    });
+});
+
+app.get('/photos/:id', (req, res, next) => {
+    if (req.params.id in examplePhotos) {
+        res.status(200).json(examplePhotos[req.params.id]);
+    } else {
+        res.status(404).json({ "message": `No photo with id ${req.params.id} found` });
+    }
 });
 
 app.post('/businesses/:id/photos', (req, res, next) => {
-    // TODO
+    if (!req.params.id in exampleBusinesses) {
+        res.status(404).json({ "message": `No business with id ${req.params.id} found` });
+        return;
+    }
+
+    const newPhoto = req.body
+
+    // Placeholder, doesn't actually store data
+    res.status(201).json({
+        "message": "successfully created",
+        "photo": {
+            "id": 712,
+            "business": req.params.id,
+            "user": 85,
+            "imageUrl": `/photoData/712`,
+            "caption": newPhoto.caption === undefined ? null : newPhoto.caption,
+            "links": {
+                "business": `/businesses/${req.params.id}`
+            }
+        },
+        "link": `/photos/712`
+    });
 });
 
 app.patch('/photos/:id', (req, res, next) => {
-    // TODO
+    if (!req.params.id in examplePhotos) {
+        res.status(404).json({ "message": `No photo with id ${req.params.id} found` });
+        return;
+    }
+
+    const updatedFields = req.body;
+    const oldPhoto = examplePhotos[req.params.id];
+
+    // Placeholder, doesn't actually update data
+    let updatedPhoto = {
+        "id": oldPhoto.id,
+        "business": oldPhoto.business,
+        "user": oldPhoto.user,
+        "imageUrl": oldPhoto.imageUrl,
+        "caption": updatedFields.caption ?? oldPhoto.caption,
+        "links": {
+            "business": `/businesses/${req.params.id}`
+        }
+    };
+
+    res.status(200).json({
+        "message": "successfully updated",
+        "photo": updatedPhoto,
+        "link": `/reviews/${req.params.id}`
+    });
 });
 
 app.delete('/photos/:id', (req, res, next) => {
-    // TODO
+    if (req.params.id in examplePhotos) {
+        // Placeholder, doesn't actually delete data
+        res.status(200).json({
+            "message": "deleted successfully",
+            "deleted": examplePhotos[req.params.id]
+        });
+    } else {
+        res.status(404).json({ "message": `No photo with id ${req.params.id} found` });
+    }
 });
