@@ -294,6 +294,27 @@ Example return:
 ```
 
 
+### `GET /reviews/:id`
+
+Gets a specific review
+
+
+Example return:
+```json
+{
+    "id": 26,
+    "business": 10,
+    "user": 6,
+    "rating": 3,
+    "priceRating": 3,
+    "comment": "Decent selection of stuff but pretty expensive",
+    "links": {
+        "business": "/businesses/10"
+    }
+}
+```
+
+
 ### `POST businesses/:id/reviews`
 
 Creates a new review for a business, from the currently authenticated user. Requires the `rating` and `priceRating` fields, and optionally contains the `comment` field. If the user already has a review for the business, the review will not be created. In this case, the id of the existing review is also returned.
