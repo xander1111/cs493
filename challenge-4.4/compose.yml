@@ -1,0 +1,29 @@
+services:
+  mysql-server:
+    image: mysql
+    env_file:
+      - .env
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_DATABASE: "messages"
+      MYSQL_USER: "messages-user"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "mysql-server"]
+      interval: 2s
+      timeout: 2s
+      retries: 60
+      start_period: 10s
+
+  api-server:
+    build: .
+    ports:
+      - "8086:8086"
+    env_file:
+      - .env
+    environment:
+      MYSQL_HOST: "mysql-server"
+      MYSQL_DB: "messages"
+      MYSQL_USER: "messages-user"
+    depends_on:
+      mysql-server:
+        condition: service_healthy
