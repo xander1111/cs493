@@ -1,0 +1,39 @@
+services:
+  mongo-server:
+    image: mongo
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: "root"
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet \"mongodb://$$MONGO_INITDB_ROOT_USERNAME:$$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/admin?authSource=admin\" --eval \"db.adminCommand({ ping: 1 })\""]
+      interval: 2s
+      timeout: 2s
+      retries: 60
+      start_period: 10s
+
+
+  mongo-init:
+    build: ./init 
+    env_file:
+      - .env
+    environment:
+      MONGO_ROOT_DB: "admin"
+      MONGO_HOST: "mongo-server"
+    depends_on:
+      mongo-server:
+        condition: service_healthy
+
+  api-server:
+    build: .
+    ports:
+      - "8086:8086"
+    env_file:
+      - .env
+    environment:
+      MONGO_HOST: "mongo-server"
+      MONGO_DB_NAME: "messagesdb"
+      MONGO_USER: "muser"
+    depends_on:
+      mongo-init:
+        condition: service_completed_successfully
