@@ -1,6 +1,6 @@
 services:
   mongo-server:
-    image: mongo
+    image: mongo:7.0
     env_file:
       - .env
     healthcheck:

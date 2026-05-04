@@ -36,8 +36,8 @@ router.get('/', async function (req, res) {
    */
   let page = parseInt(req.query.page) || 1;
   const numPerPage = 10;
-  const totalCount = collection.count({}, { hint: "_id" });
-  const lastPage = Math.ceil(collection.count({}, { hint: "_id" }) / numPerPage);
+  const totalCount = await collection.countDocuments({}, { hint: "_id" });
+  const lastPage = Math.ceil(totalCount / numPerPage);
   page = page > lastPage ? lastPage : page;
   page = page < 1 ? 1 : page;
 
