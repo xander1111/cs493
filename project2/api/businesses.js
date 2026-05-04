@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const { ObjectId } = require('mongodb');
 
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
 
@@ -36,7 +37,7 @@ router.get('/', async function (req, res) {
    */
   let page = parseInt(req.query.page) || 1;
   const numPerPage = 10;
-  const totalCount = await collection.countDocuments({}, { hint: "_id" });
+  const totalCount = await collection.countDocuments({});
   const lastPage = Math.ceil(totalCount / numPerPage);
   page = page > lastPage ? lastPage : page;
   page = page < 1 ? 1 : page;
@@ -82,15 +83,18 @@ router.get('/', async function (req, res) {
 /*
  * Route to create a new business.
  */
-router.post('/', function (req, res, next) {
+router.post('/', async function (req, res, next) {
   if (validateAgainstSchema(req.body, businessSchema)) {
     const business = extractValidFields(req.body, businessSchema);
-    business.id = businesses.length;
-    businesses.push(business);
+
+    const collection = req.app.locals.db.collection('businesses');
+
+    const result = await collection.insertOne(business);
+
     res.status(201).json({
-      id: business.id,
+      id: result.insertedId,
       links: {
-        business: `/businesses/${business.id}`
+        business: `/businesses/${result.insertedId}`
       }
     });
   } else {
@@ -103,19 +107,33 @@ router.post('/', function (req, res, next) {
 /*
  * Route to fetch info about a specific business.
  */
-router.get('/:businessid', function (req, res, next) {
-  const businessid = parseInt(req.params.businessid);
-  if (businesses[businessid]) {
+router.get('/:businessid', async function (req, res, next) {
+  let businessid = null;
+  try {
+    businessid = new ObjectId(req.params.businessid);
+  } catch (error) {
+    // Invalid ID format
+    next();
+  }
+
+  const businessesCollection = req.app.locals.db.collection('businesses');
+  let business = await businessesCollection.findOne({ '_id': businessid });
+
+  if (business) {
     /*
      * Find all reviews and photos for the specified business and create a
      * new object containing all of the business data, including reviews and
      * photos.
      */
-    const business = {
-      reviews: reviews.filter(review => review && review.businessid === businessid),
-      photos: photos.filter(photo => photo && photo.businessid === businessid)
-    };
-    Object.assign(business, businesses[businessid]);
+    const reviewsCollection = req.app.locals.db.collection('reviews');
+    const photosCollection = req.app.locals.db.collection('photos');
+
+    const reviews = await reviewsCollection.findOne({ business: business._id });
+    const photos = await photosCollection.findOne({ business: business._id });
+
+    business.reviews = reviews;
+    business.photos = photos;
+    
     res.status(200).json(business);
   } else {
     next();
@@ -125,13 +143,24 @@ router.get('/:businessid', function (req, res, next) {
 /*
  * Route to replace data for a business.
  */
-router.put('/:businessid', function (req, res, next) {
-  const businessid = parseInt(req.params.businessid);
-  if (businesses[businessid]) {
+router.put('/:businessid', async function (req, res, next) {
+  let businessid = null;
+  try {
+    businessid = new ObjectId(req.params.businessid);
+  } catch (error) {
+    // Invalid ID format
+    next();
+  }
 
+  const businessesCollection = req.app.locals.db.collection('businesses');
+  const business = await businessesCollection.findOne({ _id: businessid });
+
+  if (business) {
     if (validateAgainstSchema(req.body, businessSchema)) {
-      businesses[businessid] = extractValidFields(req.body, businessSchema);
-      businesses[businessid].id = businessid;
+      const newBusiness = extractValidFields(req.body, businessSchema);
+
+      const result = await businessesCollection.replaceOne({ _id: businessid }, newBusiness);
+
       res.status(200).json({
         links: {
           business: `/businesses/${businessid}`
@@ -151,10 +180,19 @@ router.put('/:businessid', function (req, res, next) {
 /*
  * Route to delete a business.
  */
-router.delete('/:businessid', function (req, res, next) {
-  const businessid = parseInt(req.params.businessid);
-  if (businesses[businessid]) {
-    businesses[businessid] = null;
+router.delete('/:businessid', async function (req, res, next) {
+  let businessid = null;
+  try {
+    businessid = new ObjectId(req.params.businessid);
+  } catch (error) {
+    // Invalid ID format
+    next();
+  }
+
+  const collection = req.app.locals.db.collection('businesses');
+  const result = await collection.deleteOne({ _id: new ObjectId(businessid) });
+
+  if (result.deletedCount > 0) {
     res.status(204).end();
   } else {
     next();
