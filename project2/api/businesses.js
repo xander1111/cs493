@@ -1,12 +1,11 @@
 const router = require('express').Router();
+
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
 
-const businesses = require('../data/businesses');
 const { reviews } = require('./reviews');
 const { photos } = require('./photos');
 
 exports.router = router;
-exports.businesses = businesses;
 
 /*
  * Schema describing required/optional fields of a business object.
@@ -28,7 +27,8 @@ const businessSchema = {
 /*
  * Route to return a list of businesses.
  */
-router.get('/', function (req, res) {
+router.get('/', async function (req, res) {
+  const collection = req.app.locals.db.collection('businesses');
 
   /*
    * Compute page number based on optional query string parameter `page`.
@@ -36,7 +36,8 @@ router.get('/', function (req, res) {
    */
   let page = parseInt(req.query.page) || 1;
   const numPerPage = 10;
-  const lastPage = Math.ceil(businesses.length / numPerPage);
+  const totalCount = collection.count({}, { hint: "_id" });
+  const lastPage = Math.ceil(collection.count({}, { hint: "_id" }) / numPerPage);
   page = page > lastPage ? lastPage : page;
   page = page < 1 ? 1 : page;
 
@@ -45,8 +46,11 @@ router.get('/', function (req, res) {
    * slice out the corresponsing sub-array of busibesses.
    */
   const start = (page - 1) * numPerPage;
-  const end = start + numPerPage;
-  const pageBusinesses = businesses.slice(start, end);
+  const pageBusinesses = await collection.find()
+    .sort({ _id: 1 })
+    .skip(start)
+    .limit(numPerPage)
+    .toArray();
 
   /*
    * Generate HATEOAS links for surrounding pages.
@@ -69,7 +73,7 @@ router.get('/', function (req, res) {
     pageNumber: page,
     totalPages: lastPage,
     pageSize: numPerPage,
-    totalCount: businesses.length,
+    totalCount: totalCount,
     links: links
   });
 

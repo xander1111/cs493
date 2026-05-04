@@ -3,8 +3,30 @@ const morgan = require('morgan');
 
 const api = require('./api');
 
+const { MongoClient, ObjectId } = require('mongodb');
+
 const app = express();
 const port = process.env.PORT || 8000;
+
+const mongoHost = process.env.MONGO_HOST || 'localhost';
+const mongoPort = process.env.MONGO_PORT || '27017';
+const mongoDBName = process.env.MONGO_INITDB_DATABASE || 'project2db';
+const mongoUser = process.env.MONGO_USER;
+const mongoPassword = process.env.MONGO_USER_PASSWORD;
+
+const mongoUrl = `mongodb://${mongoUser}:${mongoPassword}@${mongoHost}:${mongoPort}/${mongoDBName}`;
+
+let db;
+
+MongoClient.connect(mongoUrl).then((client) => {
+  db = client.db(mongoDBName);
+  app.locals.db = db;
+
+  app.listen(port, () => {
+    console.log(`Server is listening on port ${port}`);
+  });
+});
+
 
 /*
  * Morgan is a popular logger.
@@ -38,6 +60,3 @@ app.use('*', function (err, req, res, next) {
   })
 })
 
-app.listen(port, function() {
-  console.log("== Server is running on port", port);
-});
