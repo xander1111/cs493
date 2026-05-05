@@ -73,9 +73,9 @@ paths:
                 type: object
                 properties:
                   id:
-                    type: integer
+                    type: string
                     description: Unique ID of the created business.
-                    example: 19
+                    example: 69f91ebe82712b37b408f3d1
         '400':
           description: The request body was either not present or did not contain all of the required fields.
           content:
@@ -89,8 +89,8 @@ paths:
         in: path
         description: Unique ID of a business.
         schema:
-          type: integer
-        example: 8
+          type: string
+        example: 69f91ebe82712b37b408f3d1
         required: true
     get:
       summary: Fetch data for a specific business.
@@ -183,9 +183,9 @@ paths:
                 type: object
                 properties:
                   id:
-                    type: integer
+                    type: string
                     description: Unique ID of the created photo.
-                    example: 10
+                    example: 69f9182a2c9a669eae1a5afc
         '400':
           description: The request body was either not present or did not contain all of the required fields.
           content:
@@ -199,8 +199,8 @@ paths:
         in: path
         description: Unique ID of a photo.
         schema:
-          type: integer
-        example: 0
+          type: string
+        example: 69f9182a2c9a669eae1a5afc
         required: true
     get:
       summary: Fetch data for a specific photo.
@@ -301,9 +301,9 @@ paths:
                 type: object
                 properties:
                   id:
-                    type: integer
+                    type: string
                     description: Unique ID of the created review.
-                    example: 10
+                    example: 69f95559759f7df1685d0cfb
         '400':
           description: >
             The request body was either not present or did not contain all of the required fields.
@@ -325,8 +325,8 @@ paths:
         in: path
         description: Unique ID of a review.
         schema:
-          type: integer
-        example: 0
+          type: string
+        example: 69f95559759f7df1685d0cfb
         required: true
     get:
       summary: Fetch data for a specific review.
@@ -409,8 +409,8 @@ paths:
         in: path
         description: Unique ID of a user.
         schema:
-          type: integer
-        example: 0
+          type: string
+        example: 69f95571759f7df1685d0cfc
         required: true
     get:
       summary: Fetch a user's owned businesses.
@@ -439,8 +439,8 @@ paths:
         in: path
         description: Unique ID of a user.
         schema:
-          type: integer
-        example: 21
+          type: string
+        example: 69f95571759f7df1685d0cfc
         required: true
     get:
       summary: Fetch a user's reviews.
@@ -469,8 +469,8 @@ paths:
         in: path
         description: Unique ID of a user.
         schema:
-          type: integer
-        example: 21
+          type: string
+        example: 69f95571759f7df1685d0cfc
         required: true
     get:
       summary: Fetch a user's photos.
@@ -501,10 +501,10 @@ components:
       type: object
       properties:
         ownerid:
-          type: integer
+          type: string
           description: >
             The ID of the user who owns this business.  This is required when creating or updating a business.
-          example: 16
+          example: 69f95571759f7df1685d0cfc
         name:
           type: string
           description: Name of the business.
@@ -574,15 +574,15 @@ components:
       type: object
       properties:
         userid:
-          type: integer
+          type: string
           description: >
             The ID of the user associated with this photo.  This is required when creating or updating a photo.
-          example: 7
+          example: 69f95589759f7df1685d0cfd
         businessid:
-          type: integer
+          type: string
           description: >
             The ID of the business associated with this photo.  This is required when creating or updating a photo.
-          example: 3
+          example: 69f9558e759f7df1685d0cfe
         caption:
           type: string
           description: Caption text for the photo
@@ -597,15 +597,15 @@ components:
       type: object
       properties:
         userid:
-          type: integer
+          type: string
           description: >
             The ID of the user associated with this review.  This is required when creating or updating a review.
-          example: 7
+          example: 69f9558e759f7df1685d0cfe
         businessid:
-          type: integer
+          type: string
           description: >
             The ID of the business associated with this review.  This is required when creating or updating a review.
-          example: 3
+          example: 69f955a3759f7df1685d0cff
         dollars:
           type: integer
           description: A rating of the expensiveness of a business.  Must be an integer between 1 and 4.
