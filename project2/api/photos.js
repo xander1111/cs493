@@ -1,10 +1,9 @@
 const router = require('express').Router();
+const { ObjectId } = require('mongodb');
+
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
 
-const photos = require('../data/photos');
-
 exports.router = router;
-exports.photos = photos;
 
 /*
  * Schema describing required/optional fields of a photo object.
@@ -19,15 +18,18 @@ const photoSchema = {
 /*
  * Route to create a new photo.
  */
-router.post('/', function (req, res, next) {
+router.post('/', async function (req, res, next) {
   if (validateAgainstSchema(req.body, photoSchema)) {
     const photo = extractValidFields(req.body, photoSchema);
-    photo.id = photos.length;
-    photos.push(photo);
+
+    const photosCollection = req.app.locals.db.collection('photos');
+
+    const result = await photosCollection.insertOne(photo);
+
     res.status(201).json({
       id: photo.id,
       links: {
-        photo: `/photos/${photo.id}`,
+        photo: `/photos/${result.insertedId}`,
         business: `/businesses/${photo.businessid}`
       }
     });
@@ -41,10 +43,21 @@ router.post('/', function (req, res, next) {
 /*
  * Route to fetch info about a specific photo.
  */
-router.get('/:photoID', function (req, res, next) {
-  const photoID = parseInt(req.params.photoID);
-  if (photos[photoID]) {
-    res.status(200).json(photos[photoID]);
+router.get('/:photoID', async function (req, res, next) {
+  let photoID = null;
+  try {
+    photoID = new ObjectId(req.params.photoID);
+  } catch (error) {
+    // Invalid ID format
+    next();
+  }
+
+  const photosCollection = req.app.locals.db.collection('photos');
+
+  const photo = await photosCollection.findOne({ _id:photoID });
+
+  if (photo) {
+    res.status(200).json(photo);
   } else {
     next();
   }
@@ -53,20 +66,31 @@ router.get('/:photoID', function (req, res, next) {
 /*
  * Route to update a photo.
  */
-router.put('/:photoID', function (req, res, next) {
-  const photoID = parseInt(req.params.photoID);
-  if (photos[photoID]) {
+router.put('/:photoID', async function (req, res, next) {
+  let photoID = null;
+  try {
+    photoID = new ObjectId(req.params.photoID);
+  } catch (error) {
+    // Invalid ID format
+    next();
+  }
 
+  const photosCollection = req.app.locals.db.collection('photos');
+
+  const photo = await photosCollection.findOne({ _id: photoID });
+  
+  if (photo) {
     if (validateAgainstSchema(req.body, photoSchema)) {
       /*
        * Make sure the updated photo has the same businessid and userid as
        * the existing photo.
        */
-      const updatedPhoto = extractValidFields(req.body, photoSchema);
+      const newPhoto = extractValidFields(req.body, photoSchema);
       const existingPhoto = photos[photoID];
-      if (existingPhoto && updatedPhoto.businessid === existingPhoto.businessid && updatedPhoto.userid === existingPhoto.userid) {
-        photos[photoID] = updatedPhoto;
-        photos[photoID].id = photoID;
+      if (newPhoto && updatedPhoto.businessid === newPhoto.businessid && updatedPhoto.userid === newPhoto.userid) {
+
+        const result = await photosCollection.replaceOne({ _id: photoID }, newPhoto);
+
         res.status(200).json({
           links: {
             photo: `/photos/${photoID}`,
@@ -93,9 +117,19 @@ router.put('/:photoID', function (req, res, next) {
  * Route to delete a photo.
  */
 router.delete('/:photoID', function (req, res, next) {
-  const photoID = parseInt(req.params.photoID);
-  if (photos[photoID]) {
-    photos[photoID] = null;
+  let photoID = null;
+  try {
+    photoID = new ObjectId(req.params.photoID);
+  } catch (error) {
+    // Invalid ID format
+    next();
+  }
+
+  const photosCollection = req.app.locals.db.collection('photos');
+
+  const result = await photosCollection.deleteOne({ _id: photoID });
+
+  if (result.deletedCount > 0) {
     res.status(204).end();
   } else {
     next();
