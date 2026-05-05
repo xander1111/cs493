@@ -1,0 +1,49 @@
+#!/bin/sh
+
+CONTAINER_NAME=mongo-server
+
+usage() {
+    printf "usage: %s start|stop|restart\n" "$(basename $0)" 1>&2
+    exit 1
+}
+
+mongodb_start() {
+    . ./.env
+
+    docker run -d --rm --name $CONTAINER_NAME \
+        -p "27017:27017" \
+        -e "MONGO_INITDB_ROOT_USERNAME=$MONGO_ROOT_USER" \
+        -e "MONGO_INITDB_ROOT_PASSWORD=$MONGO_ROOT_PASSWORD" \
+        mongo
+
+    sleep 1
+
+    node init.js
+}
+
+mongodb_stop() {
+    docker container stop $CONTAINER_NAME
+}
+
+if [ $# -ne 1 ]; then
+    usage
+fi
+
+mode="$1"
+
+case $mode in
+    start)
+        mongodb_start
+        ;;
+    stop)
+        mongodb_stop
+        ;;
+    restart)
+        mongodb_stop
+        mongodb_start
+        ;;
+    *)
+        usage
+        ;;
+esac
+
