@@ -47,6 +47,7 @@ router.get('/', async function (req, res) {
    * slice out the corresponsing sub-array of busibesses.
    */
   const start = (page - 1) * numPerPage;
+  // TODO add reviews and photos to businesses
   const pageBusinesses = await collection.find()
     .sort({ _id: 1 })
     .skip(start)
@@ -128,8 +129,8 @@ router.get('/:businessid', async function (req, res, next) {
     const reviewsCollection = req.app.locals.db.collection('reviews');
     const photosCollection = req.app.locals.db.collection('photos');
 
-    const reviews = await reviewsCollection.findOne({ business: business._id });
-    const photos = await photosCollection.findOne({ business: business._id });
+    const reviews = await reviewsCollection.find({ business: business._id });
+    const photos = await photosCollection.find({ business: business._id });
 
     business.reviews = reviews;
     business.photos = photos;
