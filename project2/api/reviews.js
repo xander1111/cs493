@@ -1,10 +1,9 @@
 const router = require('express').Router();
+const { ObjectId } = require('mongodb');
+
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
 
-const reviews = require('../data/reviews');
-
 exports.router = router;
-exports.reviews = reviews;
 
 /*
  * Schema describing required/optional fields of a review object.
@@ -21,31 +20,29 @@ const reviewSchema = {
 /*
  * Route to create a new review.
  */
-router.post('/', function (req, res, next) {
+router.post('/', async function (req, res, next) {
   if (validateAgainstSchema(req.body, reviewSchema)) {
 
     const review = extractValidFields(req.body, reviewSchema);
 
+    const reviewsCollection = req.app.locals.db.collection('reviews');
+
     /*
      * Make sure the user is not trying to review the same business twice.
      */
-    const userReviewedThisBusinessAlready = reviews.some(
-      existingReview => existingReview
-        && existingReview.ownerid === review.ownerid
-        && existingReview.businessid === review.businessid
-    );
+    const userReviewedThisBusinessAlready = await reviewsCollection.findOne({ userid: review.userid, businessid: review.businessid });
 
     if (userReviewedThisBusinessAlready) {
       res.status(403).json({
         error: "User has already posted a review of this business"
       });
     } else {
-      review.id = reviews.length;
-      reviews.push(review);
+      const result = await reviewsCollection.insertOne(review);
+
       res.status(201).json({
         id: review.id,
         links: {
-          review: `/reviews/${review.id}`,
+          review: `/reviews/${result.insertedId}`,
           business: `/businesses/${review.businessid}`
         }
       });
@@ -62,9 +59,20 @@ router.post('/', function (req, res, next) {
  * Route to fetch info about a specific review.
  */
 router.get('/:reviewID', function (req, res, next) {
-  const reviewID = parseInt(req.params.reviewID);
-  if (reviews[reviewID]) {
-    res.status(200).json(reviews[reviewID]);
+  let reviewID = null;
+  try {
+    reviewID = new ObjectId(req.params.reviewID);
+  } catch (error) {
+    // Invalid ID format
+    next();
+  }
+
+  const reviewsCollection = req.app.locals.db.collection('reviews');
+
+  const review = await reviewsCollection.findOne({ _id: reviewID });
+
+  if (reviews) {
+    res.status(200).json(review);
   } else {
     next();
   }
@@ -73,24 +81,36 @@ router.get('/:reviewID', function (req, res, next) {
 /*
  * Route to update a review.
  */
-router.put('/:reviewID', function (req, res, next) {
-  const reviewID = parseInt(req.params.reviewID);
-  if (reviews[reviewID]) {
+router.put('/:reviewID', async function (req, res, next) {
+  let reviewID = null;
+  try {
+    reviewID = new ObjectId(req.params.reviewID);
+  } catch (error) {
+    // Invalid ID format
+    next();
+  }
+
+  const reviewsCollection = req.app.locals.db.collection('reviews');
+
+  const review = await reviewsCollection.findOne({ _id: reviewID });
+
+
+  if (review) {
 
     if (validateAgainstSchema(req.body, reviewSchema)) {
       /*
        * Make sure the updated review has the same businessid and userid as
        * the existing review.
        */
-      let updatedReview = extractValidFields(req.body, reviewSchema);
+      let newReview = extractValidFields(req.body, reviewSchema);
       let existingReview = reviews[reviewID];
-      if (updatedReview.businessid === existingReview.businessid && updatedReview.userid === existingReview.userid) {
-        reviews[reviewID] = updatedReview;
-        reviews[reviewID].id = reviewID;
+      if (newReview.businessid === existingReview.businessid && newReview.userid === existingReview.userid) {
+        const result = await reviewsCollection.replaceOne({ _id: reviewID }, newReview);
+
         res.status(200).json({
           links: {
             review: `/reviews/${reviewID}`,
-            business: `/businesses/${updatedReview.businessid}`
+            business: `/businesses/${newReview.businessid}`
           }
         });
       } else {
@@ -113,9 +133,19 @@ router.put('/:reviewID', function (req, res, next) {
  * Route to delete a review.
  */
 router.delete('/:reviewID', function (req, res, next) {
-  const reviewID = parseInt(req.params.reviewID);
-  if (reviews[reviewID]) {
-    reviews[reviewID] = null;
+  let reviewID = null;
+  try {
+    reviewID = new ObjectId(req.params.reviewID);
+  } catch (error) {
+    // Invalid ID format
+    next();
+  }
+
+  const reviewsCollection = req.app.locals.db.collection('reviews');
+
+  const result = await reviewsCollection.deleteOne({ _id: reviewID });
+  
+  if (result.deletedCount > 0) {
     res.status(204).end();
   } else {
     next();

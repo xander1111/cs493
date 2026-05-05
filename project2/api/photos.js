@@ -87,7 +87,7 @@ router.put('/:photoID', async function (req, res, next) {
        */
       const newPhoto = extractValidFields(req.body, photoSchema);
       const existingPhoto = photos[photoID];
-      if (newPhoto && updatedPhoto.businessid === newPhoto.businessid && updatedPhoto.userid === newPhoto.userid) {
+      if (newPhoto && newPhoto.businessid === existingPhoto.businessid && newPhoto.userid === existingPhoto.userid) {
 
         const result = await photosCollection.replaceOne({ _id: photoID }, newPhoto);
 
