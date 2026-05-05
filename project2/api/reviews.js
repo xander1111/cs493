@@ -24,6 +24,22 @@ router.post('/', async function (req, res, next) {
   if (validateAgainstSchema(req.body, reviewSchema)) {
 
     const review = extractValidFields(req.body, reviewSchema);
+    try {
+      review.businessid = new ObjectId (review.businessid);
+    } catch {
+      res.status(400).json({
+        error: "Invalid businessid"
+      });
+      return;
+    }
+    try {
+      review.userid = new ObjectId (review.userid);
+    } catch {
+      res.status(400).json({
+        error: "Invalid userid"
+      });
+      return;
+    }
 
     const reviewsCollection = req.app.locals.db.collection('reviews');
 
@@ -65,13 +81,14 @@ router.get('/:reviewID', async function (req, res, next) {
   } catch (error) {
     // Invalid ID format
     next();
+    return;
   }
 
   const reviewsCollection = req.app.locals.db.collection('reviews');
 
   const review = await reviewsCollection.findOne({ _id: reviewID });
 
-  if (reviews) {
+  if (review) {
     res.status(200).json(review);
   } else {
     next();
@@ -88,6 +105,7 @@ router.put('/:reviewID', async function (req, res, next) {
   } catch (error) {
     // Invalid ID format
     next();
+    return;
   }
 
   const reviewsCollection = req.app.locals.db.collection('reviews');
@@ -103,6 +121,23 @@ router.put('/:reviewID', async function (req, res, next) {
        * the existing review.
        */
       let newReview = extractValidFields(req.body, reviewSchema);
+      try {
+        newReview.businessid = new ObjectId (newReview.businessid);
+      } catch {
+        res.status(400).json({
+          error: "Invalid businessid"
+        });
+        return;
+      }
+      try {
+        newReview.userid = new ObjectId (newReview.userid);
+      } catch {
+        res.status(400).json({
+          error: "Invalid userid"
+        });
+        return;
+      }
+
       let existingReview = reviews[reviewID];
       if (newReview.businessid === existingReview.businessid && newReview.userid === existingReview.userid) {
         const result = await reviewsCollection.replaceOne({ _id: reviewID }, newReview);
@@ -139,6 +174,7 @@ router.delete('/:reviewID', async function (req, res, next) {
   } catch (error) {
     // Invalid ID format
     next();
+    return;
   }
 
   const reviewsCollection = req.app.locals.db.collection('reviews');

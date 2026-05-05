@@ -1,24 +1,46 @@
 const router = require('express').Router();
+const { ObjectId } = require('mongodb');
 
 exports.router = router;
 
 /*
  * Route to list all of a user's businesses.
  */
-router.get('/:userid/businesses', async function (req, res) {
+router.get('/:userid/businesses', async function (req, res, next) {
   let userid = null;
   try {
     userid = new ObjectId(req.params.userid);
   } catch (error) {
-    // Invalid ID format
-    next();
+    res.status(400).json({
+      error: "Invalid userid"
+    });
+    return;
   }
 
   const businessesCollection = req.app.locals.db.collection('businesses');
 
-  const userBusinesses = await businessesCollection.find({ ownerid: userid }).toArray();
-
-  // TODO add photos and reviews to businesses
+  const pipeline = [
+    {
+      $lookup: {
+        from: "photos",
+        localField: "_id",
+        foreignField: "businessid",
+        as: "photos"
+      }
+    },
+    {
+      $lookup: {
+        from: "reviews",
+        localField: "_id",
+        foreignField: "businessid",
+        as: "reviews"
+      }
+    },
+    {
+      $match: { ownerid: userid }
+    }
+  ];
+  const userBusinesses = await businessesCollection.aggregate(pipeline).toArray();
 
   res.status(200).json({
     businesses: userBusinesses
@@ -28,13 +50,15 @@ router.get('/:userid/businesses', async function (req, res) {
 /*
  * Route to list all of a user's reviews.
  */
-router.get('/:userid/reviews', function (req, res) {
+router.get('/:userid/reviews', async function (req, res, next) {
   let userid = null;
   try {
     userid = new ObjectId(req.params.userid);
   } catch (error) {
-    // Invalid ID format
-    next();
+    res.status(400).json({
+      error: "Invalid userid"
+    });
+    return;
   }
 
   const reviewsCollection = req.app.locals.db.collection('reviews');
@@ -48,13 +72,15 @@ router.get('/:userid/reviews', function (req, res) {
 /*
  * Route to list all of a user's photos.
  */
-router.get('/:userid/photos', function (req, res) {
+router.get('/:userid/photos', async function (req, res, next) {
   let userid = null;
   try {
     userid = new ObjectId(req.params.userid);
   } catch (error) {
-    // Invalid ID format
-    next();
+    res.status(400).json({
+      error: "Invalid userid"
+    });
+    return;
   }
 
   const photosColleciton = req.app.locals.db.collection('photos');

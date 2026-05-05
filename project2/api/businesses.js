@@ -47,8 +47,26 @@ router.get('/', async function (req, res) {
    * slice out the corresponsing sub-array of busibesses.
    */
   const start = (page - 1) * numPerPage;
-  // TODO add reviews and photos to businesses
-  const pageBusinesses = await collection.find()
+
+  const pipeline = [
+    {
+      $lookup: {
+        from: "photos",
+        localField: "_id",
+        foreignField: "businessid",
+        as: "photos"
+      }
+    },
+    {
+      $lookup: {
+        from: "reviews",
+        localField: "_id",
+        foreignField: "businessid",
+        as: "reviews"
+      }
+    }
+  ];
+  const pageBusinesses = await collection.aggregate(pipeline)
     .sort({ _id: 1 })
     .skip(start)
     .limit(numPerPage)
@@ -87,7 +105,15 @@ router.get('/', async function (req, res) {
 router.post('/', async function (req, res, next) {
   if (validateAgainstSchema(req.body, businessSchema)) {
     const business = extractValidFields(req.body, businessSchema);
-
+    try {
+      business.ownerid = new ObjectId (business.ownerid);
+    } catch {
+      res.status(400).json({
+        error: "Invalid ownerid"
+      });
+      return;
+    }
+    
     const collection = req.app.locals.db.collection('businesses');
 
     const result = await collection.insertOne(business);
@@ -113,28 +139,33 @@ router.get('/:businessid', async function (req, res, next) {
   try {
     businessid = new ObjectId(req.params.businessid);
   } catch (error) {
-    // Invalid ID format
-    next();
+    res.status(400).json({
+      error: "Invalid businessid"
+    });
+    return;
   }
 
   const businessesCollection = req.app.locals.db.collection('businesses');
-  let business = await businessesCollection.findOne({ '_id': businessid });
-
+  const pipeline = [
+    {
+      $lookup: {
+        from: "photos",
+        localField: "_id",
+        foreignField: "businessid",
+        as: "photos"
+      }
+    },
+    {
+      $lookup: {
+        from: "reviews",
+        localField: "_id",
+        foreignField: "businessid",
+        as: "reviews"
+      }
+    }
+  ];
+  const business = await businessesCollection.aggregate(pipeline).toArray()[0];
   if (business) {
-    /*
-     * Find all reviews and photos for the specified business and create a
-     * new object containing all of the business data, including reviews and
-     * photos.
-     */
-    const reviewsCollection = req.app.locals.db.collection('reviews');
-    const photosCollection = req.app.locals.db.collection('photos');
-
-    const reviews = await reviewsCollection.find({ business: business._id });
-    const photos = await photosCollection.find({ business: business._id });
-
-    business.reviews = reviews;
-    business.photos = photos;
-    
     res.status(200).json(business);
   } else {
     next();
@@ -149,8 +180,10 @@ router.put('/:businessid', async function (req, res, next) {
   try {
     businessid = new ObjectId(req.params.businessid);
   } catch (error) {
-    // Invalid ID format
-    next();
+    res.status(400).json({
+      error: "Invalid businessid"
+    });
+    return;
   }
 
   const businessesCollection = req.app.locals.db.collection('businesses');
@@ -159,6 +192,14 @@ router.put('/:businessid', async function (req, res, next) {
   if (business) {
     if (validateAgainstSchema(req.body, businessSchema)) {
       const newBusiness = extractValidFields(req.body, businessSchema);
+      try {
+        newBusiness.ownerid = new ObjectId (newBusiness.ownerid);
+      } catch {
+        res.status(400).json({
+          error: "Invalid ownerid"
+        });
+        return;
+      }
 
       const result = await businessesCollection.replaceOne({ _id: businessid }, newBusiness);
 
@@ -186,8 +227,10 @@ router.delete('/:businessid', async function (req, res, next) {
   try {
     businessid = new ObjectId(req.params.businessid);
   } catch (error) {
-    // Invalid ID format
-    next();
+    res.status(400).json({
+      error: "Invalid businessid"
+    });
+    return;
   }
 
   const collection = req.app.locals.db.collection('businesses');

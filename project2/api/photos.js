@@ -20,14 +20,31 @@ const photoSchema = {
  */
 router.post('/', async function (req, res, next) {
   if (validateAgainstSchema(req.body, photoSchema)) {
-    const photo = extractValidFields(req.body, photoSchema);
+    let photo = extractValidFields(req.body, photoSchema);
+    try {
+      photo.businessid = new ObjectId (photo.businessid);
+    } catch {
+      res.status(400).json({
+        error: "Invalid businessid"
+      });
+      return;
+    }
+
+    try {
+      photo.userid = new ObjectId (photo.userid);
+    } catch {
+      res.status(400).json({
+        error: "Invalid userid"
+      });
+      return;
+    }
 
     const photosCollection = req.app.locals.db.collection('photos');
 
     const result = await photosCollection.insertOne(photo);
 
     res.status(201).json({
-      id: photo.id,
+      id: result.insertedId,
       links: {
         photo: `/photos/${result.insertedId}`,
         business: `/businesses/${photo.businessid}`
@@ -48,8 +65,10 @@ router.get('/:photoID', async function (req, res, next) {
   try {
     photoID = new ObjectId(req.params.photoID);
   } catch (error) {
-    // Invalid ID format
-    next();
+    res.status(400).json({
+      error: "Invalid photoid"
+    });
+    return;
   }
 
   const photosCollection = req.app.locals.db.collection('photos');
@@ -73,6 +92,7 @@ router.put('/:photoID', async function (req, res, next) {
   } catch (error) {
     // Invalid ID format
     next();
+    return;
   }
 
   const photosCollection = req.app.locals.db.collection('photos');
@@ -86,6 +106,23 @@ router.put('/:photoID', async function (req, res, next) {
        * the existing photo.
        */
       const newPhoto = extractValidFields(req.body, photoSchema);
+      try {
+        newPhoto.businessid = new ObjectId (newPhoto.businessid);
+      } catch {
+        res.status(400).json({
+          error: "Invalid businessid"
+        });
+        return;
+      }
+      try {
+        newPhoto.userid = new ObjectId (newPhoto.userid);
+      } catch {
+        res.status(400).json({
+          error: "Invalid userid"
+        });
+        return;
+      }
+
       const existingPhoto = photos[photoID];
       if (newPhoto && newPhoto.businessid === existingPhoto.businessid && newPhoto.userid === existingPhoto.userid) {
 
@@ -116,13 +153,14 @@ router.put('/:photoID', async function (req, res, next) {
 /*
  * Route to delete a photo.
  */
-router.delete('/:photoID', function (req, res, next) {
+router.delete('/:photoID', async function (req, res, next) {
   let photoID = null;
   try {
     photoID = new ObjectId(req.params.photoID);
   } catch (error) {
     // Invalid ID format
     next();
+    return;
   }
 
   const photosCollection = req.app.locals.db.collection('photos');
