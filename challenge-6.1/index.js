@@ -5,6 +5,8 @@ const express = require('express')
 const app = express();
 const { MongoClient, ObjectId } = require('mongodb');
 
+const bcrypt = require('bcryptjs')
+
 app.use(express.json());
 
 const mongoHost = process.env.MONGO_HOST;
@@ -98,6 +100,71 @@ app.delete('/messages/:id', async (req, res, next) => {
     } else {
         res.status(404).send({"error": `Message ${id} not found`});
         console.log(`== ID ${id} not found`);
+    }
+});
+
+app.post('/users', async (req, res, next) => {
+    if (!req.body.username || !req.body.password) {
+        res.status(400).json({
+            "error": "'username' and 'password' fields required"
+        });
+        return;
+    }
+
+    const username = req.body.username;
+    const password = req.body.password;
+
+    const collection = db.collection("users");
+
+    const userExists = await collection.findOne({ username: username });
+    if (userExists) {
+        res.status(409).json({
+            "error": "username already in use"  // Does give away some info; provides a way to enumerate existing users. I don't really see a good way to avoid this without using something like an email though.
+        });
+        return;
+    }
+
+    const password_hash = await bcrypt.hash(password, 8);
+
+    const result = await collection.insertOne({ username: username, password: password_hash });
+
+    res.status(200).json({
+        "status": "ok"
+    });
+});
+
+app.post('/login', async (req, res, next) => {
+    if (!req.body.username || !req.body.password) {
+        res.status(400).json({
+            "error": "'username' and 'password' fields required"
+        });
+        return;
+    }
+
+    const username = req.body.username;
+    const password = req.body.password;
+
+    const collection = db.collection("users");
+    const user = await collection.findOne({ username: username });
+    if (!user) {
+        res.status(403).json({
+            "status": "invalid login"
+        });
+        return;
+    }
+
+    const password_hash = user.password;
+
+    const valid_login = await bcrypt.compare(password, password_hash);
+
+    if (valid_login) {
+        res.status(200).json({
+            "status": "ok"
+        });
+    } else {
+        res.status(403).json({
+            "status": "invalid login"
+        });
     }
 });
 
