@@ -73,7 +73,7 @@ router.get('/:photoID', async function (req, res, next) {
 
   const photosCollection = req.app.locals.db.collection('photos');
 
-  const photo = await photosCollection.findOne({ _id:photoID });
+  const photo = await photosCollection.findOne({ _id: photoID });
 
   if (photo) {
     res.status(200).json(photo);
@@ -123,15 +123,14 @@ router.put('/:photoID', async function (req, res, next) {
         return;
       }
 
-      const existingPhoto = photos[photoID];
-      if (newPhoto && newPhoto.businessid === existingPhoto.businessid && newPhoto.userid === existingPhoto.userid) {
-
+      const existingPhoto = await photosCollection.findOne({ _id: photoID });
+      if (newPhoto && newPhoto.businessid.equals(existingPhoto.businessid) && newPhoto.userid.equals(existingPhoto.userid)) {
         const result = await photosCollection.replaceOne({ _id: photoID }, newPhoto);
 
         res.status(200).json({
           links: {
             photo: `/photos/${photoID}`,
-            business: `/businesses/${updatedPhoto.businessid}`
+            business: `/businesses/${newPhoto.businessid}`
           }
         });
       } else {

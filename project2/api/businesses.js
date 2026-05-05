@@ -148,6 +148,9 @@ router.get('/:businessid', async function (req, res, next) {
   const businessesCollection = req.app.locals.db.collection('businesses');
   const pipeline = [
     {
+      $match: { _id: businessid }
+    },
+    {
       $lookup: {
         from: "photos",
         localField: "_id",
@@ -164,9 +167,9 @@ router.get('/:businessid', async function (req, res, next) {
       }
     }
   ];
-  const business = await businessesCollection.aggregate(pipeline).toArray()[0];
-  if (business) {
-    res.status(200).json(business);
+  const business = await businessesCollection.aggregate(pipeline).toArray();
+  if (business[0]) {
+    res.status(200).json(business[0]);
   } else {
     next();
   }

@@ -56,7 +56,7 @@ router.post('/', async function (req, res, next) {
       const result = await reviewsCollection.insertOne(review);
 
       res.status(201).json({
-        id: review.id,
+        id: result.insertedId,
         links: {
           review: `/reviews/${result.insertedId}`,
           business: `/businesses/${review.businessid}`
@@ -79,8 +79,9 @@ router.get('/:reviewID', async function (req, res, next) {
   try {
     reviewID = new ObjectId(req.params.reviewID);
   } catch (error) {
-    // Invalid ID format
-    next();
+    res.status(400).json({
+      error: "Invalid reviewid"
+    });
     return;
   }
 
@@ -103,9 +104,10 @@ router.put('/:reviewID', async function (req, res, next) {
   try {
     reviewID = new ObjectId(req.params.reviewID);
   } catch (error) {
-    // Invalid ID format
-    next();
-    return;
+  res.status(400).json({
+    error: "Invalid reviewid"
+  });
+  return;
   }
 
   const reviewsCollection = req.app.locals.db.collection('reviews');
@@ -138,8 +140,8 @@ router.put('/:reviewID', async function (req, res, next) {
         return;
       }
 
-      let existingReview = reviews[reviewID];
-      if (newReview.businessid === existingReview.businessid && newReview.userid === existingReview.userid) {
+      let existingReview = await reviewsCollection.findOne({ _id: reviewID });
+      if (newReview && newReview.businessid.equals(existingReview.businessid) && newReview.userid.equals(existingReview.userid)) {
         const result = await reviewsCollection.replaceOne({ _id: reviewID }, newReview);
 
         res.status(200).json({

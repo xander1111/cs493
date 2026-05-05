@@ -21,6 +21,9 @@ router.get('/:userid/businesses', async function (req, res, next) {
 
   const pipeline = [
     {
+      $match: { ownerid: userid }
+    },
+    {
       $lookup: {
         from: "photos",
         localField: "_id",
@@ -35,9 +38,6 @@ router.get('/:userid/businesses', async function (req, res, next) {
         foreignField: "businessid",
         as: "reviews"
       }
-    },
-    {
-      $match: { ownerid: userid }
     }
   ];
   const userBusinesses = await businessesCollection.aggregate(pipeline).toArray();
