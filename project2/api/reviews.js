@@ -58,7 +58,7 @@ router.post('/', async function (req, res, next) {
 /*
  * Route to fetch info about a specific review.
  */
-router.get('/:reviewID', function (req, res, next) {
+router.get('/:reviewID', async function (req, res, next) {
   let reviewID = null;
   try {
     reviewID = new ObjectId(req.params.reviewID);
@@ -132,7 +132,7 @@ router.put('/:reviewID', async function (req, res, next) {
 /*
  * Route to delete a review.
  */
-router.delete('/:reviewID', function (req, res, next) {
+router.delete('/:reviewID', async function (req, res, next) {
   let reviewID = null;
   try {
     reviewID = new ObjectId(req.params.reviewID);
