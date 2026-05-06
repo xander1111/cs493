@@ -37,19 +37,19 @@ function normalize_message(m) {
 }
 
 function requireAuthorization(req, res, next) {
-    const auth_value = req.get('Authorization').split(' ');
-
-    const auth_type = auth_value[0];
-    const token = auth_value[1];
-
-    if (auth_type !== "Bearer") {
-        console.log(auth_type);
-        res.status(400).json({
-            "error": "Invalid authorization token"
-        });
-    }
-
     try {
+        const auth_value = req.get('Authorization').split(' ');
+
+        const auth_type = auth_value[0];
+        const token = auth_value[1];
+
+        if (auth_type !== "Bearer") {
+            console.log(auth_type);
+            res.status(400).json({
+                "error": "Invalid authorization token"
+            });
+        }
+
         const payload = jwt.verify(token, process.env.JWT_SECRET_KEY);
         req.locals = { user: payload.sub };
         next();
