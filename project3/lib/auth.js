@@ -27,5 +27,27 @@ module.exports = {
         "error": "Invalid authorization token"
       });
     }
+  },
+
+  /*
+   * Middleware to check for a valid auth token
+   *
+   * Calls next() regardless of if the request has a valid auth token
+   */
+  tryAuthorization: function (req, res, next) {
+    try {
+      const auth_value = req.get('Authorization').split(' ');
+
+      const auth_type = auth_value[0];
+      const token = auth_value[1];
+
+      if (auth_type === "Bearer") {
+        const payload = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        req.locals = { userid: payload.userid, admin: payload.admin };
+      }
+    } catch (err) {
+      req.locals = { userid: null, admin: false };
+    }
+    next();
   }
 };

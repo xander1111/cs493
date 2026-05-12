@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
-const { requireAuthorization } = require('../lib/auth');
+const { requireAuthorization, tryAuthorization } = require('../lib/auth');
 
 exports.router = router;
 
@@ -133,7 +133,7 @@ router.get('/:userid/photos', requireAuthorization, async function (req, res, ne
 /*
  * Route to create a new user account
  */
-router.post('/', async function (req, res, next) {
+router.post('/', tryAuthorization, async function (req, res, next) {
   if (validateAgainstSchema(req.body, userSchema)) {
     const collection = req.app.locals.db.collection("users");
 
@@ -161,7 +161,7 @@ router.post('/', async function (req, res, next) {
       name: newUser.name,
       email: newUser.email,
       password: hashedPass,
-      admin: false
+      admin: req.locals.admin && newUser.admin  // If this request is not being made by an admin, set admin to false
     });
 
     res.status(200).json({
