@@ -113,7 +113,7 @@ router.get('/:userid/photos', async function (req, res, next) {
  */
 router.post('/users', async function (req, res, next) {
   if (validateAgainstSchema(req.body, userSchema)) {
-    const collection = db.collection("users");
+    const collection = req.app.locals.db.collection("users");
 
     const newUser = extractValidFields(req.body, userSchema);
 
@@ -164,7 +164,7 @@ router.post('/users/:userid', async function (res, req, next) {
   }
 
   if (validateAgainstSchema(req.body, loginSchema)) {
-    const collection = db.collection("users");
+    const collection = req.app.locals.db.collection("users");
     const loginDetails = extractValidFields(req.body, loginSchema);
 
     const user = await collection.findOne({ _id: userid });
@@ -198,5 +198,31 @@ router.post('/users/:userid', async function (res, req, next) {
     res.status(400).json({
       "error": "Request body is not a valid login object"
     });
+  }
+});
+
+router.get('/users/:userid', async function (res, req, next) {
+  let userid = null;
+  try {
+    userid = new ObjectId(req.params.userid);
+  } catch (error) {
+    res.status(400).json({
+      error: "Invalid userid"
+    });
+    return;
+  }
+
+  const collection = req.app.locals.db.collection("users");
+
+  const user = await collection.findOne({ _id: userid });
+  if (user) {
+    res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      admin: user.admin ?? false
+    });
+  } else {
+    next();
   }
 });
