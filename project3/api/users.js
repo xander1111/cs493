@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { ObjectId } = require('mongodb');
 
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
 
@@ -13,6 +14,11 @@ const userSchema = {
   password: { required: true },
   admin: { required: false }
 };
+
+const loginSchema = {
+  email: { required: true },
+  password: { required: true },
+}
 
 /*
  * Route to list all of a user's businesses.
@@ -142,6 +148,55 @@ router.post('/users', async function (req, res, next) {
   } else {
     res.status(400).json({
       "error": "Request body is not a valid user object"
+    });
+  }
+});
+
+router.post('/users/:userid', async function (res, req, next) {
+  let userid = null;
+  try {
+    userid = new ObjectId(req.params.userid);
+  } catch (error) {
+    res.status(400).json({
+      error: "Invalid userid"
+    });
+    return;
+  }
+
+  if (validateAgainstSchema(req.body, loginSchema)) {
+    const collection = db.collection("users");
+    const loginDetails = extractValidFields(req.body, loginSchema);
+
+    const user = await collection.findOne({ _id: userid });
+    if (!user) {
+      res.status(401).json({
+        "status": "invalid login"
+      });
+      return;
+    }
+
+    const password_hash = user.password;
+
+    const valid_login = await bcrypt.compare(loginDetails.password, password_hash);
+
+    if (valid_login) {
+      const payload = { "userid": userid };
+      const expiration = { "expiresIn": "24h" };
+      const token = jwt.sign(payload, process.env.JWT_SECRET_KEY, expiration);
+
+      res.status(200).json({
+        "status": "ok",
+        "token": token
+      });
+    } else {
+      res.status(401).json({
+        "status": "invalid login"
+      });
+    }
+
+  } else {
+    res.status(400).json({
+      "error": "Request body is not a valid login object"
     });
   }
 });
