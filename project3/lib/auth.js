@@ -6,7 +6,7 @@ module.exports = {
    *
    * Only calls next() if the request has a valid auth token
    */
-  requireAuthorization: async function (req, res, next) {
+  requireAuthorization: function (req, res, next) {
     try {
       const auth_value = req.get('Authorization').split(' ');
 
@@ -20,7 +20,7 @@ module.exports = {
       }
 
       const payload = jwt.verify(token, process.env.JWT_SECRET_KEY);
-      req.locals = { user: payload.sub };
+      req.locals = { userid: payload.userid };
       next();
     } catch (err) {
       res.status(400).json({

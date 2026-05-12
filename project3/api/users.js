@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
+const { requireAuthorization } = require('../lib/auth');
 
 exports.router = router;
 
@@ -23,13 +24,20 @@ const loginSchema = {
 /*
  * Route to list all of a user's businesses.
  */
-router.get('/:userid/businesses', async function (req, res, next) {
+router.get('/:userid/businesses', requireAuthorization, async function (req, res, next) {
   let userid = null;
   try {
     userid = new ObjectId(req.params.userid);
   } catch (error) {
     res.status(400).json({
       error: "Invalid userid"
+    });
+    return;
+  }
+
+  if (req.locals.userid !== userid) {
+    res.status(401).json({
+      "error": "user not authorized to access this resource"
     });
     return;
   }
@@ -67,13 +75,20 @@ router.get('/:userid/businesses', async function (req, res, next) {
 /*
  * Route to list all of a user's reviews.
  */
-router.get('/:userid/reviews', async function (req, res, next) {
+router.get('/:userid/reviews', requireAuthorization, async function (req, res, next) {
   let userid = null;
   try {
     userid = new ObjectId(req.params.userid);
   } catch (error) {
     res.status(400).json({
       error: "Invalid userid"
+    });
+    return;
+  }
+
+  if (req.locals.userid !== userid) {
+    res.status(401).json({
+      "error": "user not authorized to access this resource"
     });
     return;
   }
@@ -89,13 +104,20 @@ router.get('/:userid/reviews', async function (req, res, next) {
 /*
  * Route to list all of a user's photos.
  */
-router.get('/:userid/photos', async function (req, res, next) {
+router.get('/:userid/photos', requireAuthorization, async function (req, res, next) {
   let userid = null;
   try {
     userid = new ObjectId(req.params.userid);
   } catch (error) {
     res.status(400).json({
       error: "Invalid userid"
+    });
+    return;
+  }
+
+  if (req.locals.userid !== userid) {
+    res.status(401).json({
+      "error": "user not authorized to access this resource"
     });
     return;
   }
@@ -111,7 +133,7 @@ router.get('/:userid/photos', async function (req, res, next) {
 /*
  * Route to create a new user account
  */
-router.post('/users', async function (req, res, next) {
+router.post('/', async function (req, res, next) {
   if (validateAgainstSchema(req.body, userSchema)) {
     const collection = req.app.locals.db.collection("users");
 
@@ -152,7 +174,7 @@ router.post('/users', async function (req, res, next) {
   }
 });
 
-router.post('/users/:userid', async function (res, req, next) {
+router.post('/:userid', async function (res, req, next) {
   let userid = null;
   try {
     userid = new ObjectId(req.params.userid);
@@ -201,13 +223,20 @@ router.post('/users/:userid', async function (res, req, next) {
   }
 });
 
-router.get('/users/:userid', async function (res, req, next) {
+router.get('/:userid', requireAuthorization, async function (res, req, next) {
   let userid = null;
   try {
     userid = new ObjectId(req.params.userid);
   } catch (error) {
     res.status(400).json({
-      error: "Invalid userid"
+      "error": "Invalid userid"
+    });
+    return;
+  }
+
+  if (req.locals.userid !== userid) {
+    res.status(401).json({
+      "error": "user not authorized to access this resource"
     });
     return;
   }
