@@ -23,7 +23,7 @@ router.post('/', requireAuthorization, async function (req, res, next) {
   if (validateAgainstSchema(req.body, photoSchema)) {
     let photo = extractValidFields(req.body, photoSchema);
     try {
-      photo.businessid = new ObjectId (photo.businessid);
+      photo.businessid = new ObjectId(photo.businessid);
     } catch {
       res.status(400).json({
         error: "Invalid businessid"
@@ -32,7 +32,7 @@ router.post('/', requireAuthorization, async function (req, res, next) {
     }
 
     try {
-      photo.userid = new ObjectId (photo.userid);
+      photo.userid = new ObjectId(photo.userid);
     } catch {
       res.status(400).json({
         error: "Invalid userid"
@@ -93,7 +93,7 @@ router.get('/:photoID', async function (req, res, next) {
 /*
  * Route to update a photo.
  */
-router.put('/:photoID', async function (req, res, next) {
+router.put('/:photoID', requireAuthorization, async function (req, res, next) {
   let photoID = null;
   try {
     photoID = new ObjectId(req.params.photoID);
@@ -106,7 +106,7 @@ router.put('/:photoID', async function (req, res, next) {
   const photosCollection = req.app.locals.db.collection('photos');
 
   const photo = await photosCollection.findOne({ _id: photoID });
-  
+
   if (photo) {
     if (validateAgainstSchema(req.body, photoSchema)) {
       /*
@@ -115,7 +115,7 @@ router.put('/:photoID', async function (req, res, next) {
        */
       const newPhoto = extractValidFields(req.body, photoSchema);
       try {
-        newPhoto.businessid = new ObjectId (newPhoto.businessid);
+        newPhoto.businessid = new ObjectId(newPhoto.businessid);
       } catch {
         res.status(400).json({
           error: "Invalid businessid"
@@ -123,10 +123,17 @@ router.put('/:photoID', async function (req, res, next) {
         return;
       }
       try {
-        newPhoto.userid = new ObjectId (newPhoto.userid);
+        newPhoto.userid = new ObjectId(newPhoto.userid);
       } catch {
         res.status(400).json({
           error: "Invalid userid"
+        });
+        return;
+      }
+
+      if (req.locals.userid !== photo.userid) {
+        res.status(401).json({
+          "error": "authenticated user does not match photo user id"
         });
         return;
       }

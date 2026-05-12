@@ -26,7 +26,7 @@ router.post('/', requireAuthorization, async function (req, res, next) {
 
     const review = extractValidFields(req.body, reviewSchema);
     try {
-      review.businessid = new ObjectId (review.businessid);
+      review.businessid = new ObjectId(review.businessid);
     } catch {
       res.status(400).json({
         error: "Invalid businessid"
@@ -34,7 +34,7 @@ router.post('/', requireAuthorization, async function (req, res, next) {
       return;
     }
     try {
-      review.userid = new ObjectId (review.userid);
+      review.userid = new ObjectId(review.userid);
     } catch {
       res.status(400).json({
         error: "Invalid userid"
@@ -107,15 +107,15 @@ router.get('/:reviewID', async function (req, res, next) {
 /*
  * Route to update a review.
  */
-router.put('/:reviewID', async function (req, res, next) {
+router.put('/:reviewID', requireAuthorization, async function (req, res, next) {
   let reviewID = null;
   try {
     reviewID = new ObjectId(req.params.reviewID);
   } catch (error) {
-  res.status(400).json({
-    error: "Invalid reviewid"
-  });
-  return;
+    res.status(400).json({
+      error: "Invalid reviewid"
+    });
+    return;
   }
 
   const reviewsCollection = req.app.locals.db.collection('reviews');
@@ -132,7 +132,7 @@ router.put('/:reviewID', async function (req, res, next) {
        */
       let newReview = extractValidFields(req.body, reviewSchema);
       try {
-        newReview.businessid = new ObjectId (newReview.businessid);
+        newReview.businessid = new ObjectId(newReview.businessid);
       } catch {
         res.status(400).json({
           error: "Invalid businessid"
@@ -140,10 +140,17 @@ router.put('/:reviewID', async function (req, res, next) {
         return;
       }
       try {
-        newReview.userid = new ObjectId (newReview.userid);
+        newReview.userid = new ObjectId(newReview.userid);
       } catch {
         res.status(400).json({
           error: "Invalid userid"
+        });
+        return;
+      }
+
+      if (req.locals.userid !== review.userid) {
+        res.status(401).json({
+          "error": "authenticated user does not match review user id"
         });
         return;
       }
@@ -190,7 +197,7 @@ router.delete('/:reviewID', async function (req, res, next) {
   const reviewsCollection = req.app.locals.db.collection('reviews');
 
   const result = await reviewsCollection.deleteOne({ _id: reviewID });
-  
+
   if (result.deletedCount > 0) {
     res.status(204).end();
   } else {

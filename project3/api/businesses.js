@@ -186,7 +186,7 @@ router.get('/:businessid', async function (req, res, next) {
 /*
  * Route to replace data for a business.
  */
-router.put('/:businessid', async function (req, res, next) {
+router.put('/:businessid', requireAuthorization, async function (req, res, next) {
   let businessid = null;
   try {
     businessid = new ObjectId(req.params.businessid);
@@ -208,6 +208,13 @@ router.put('/:businessid', async function (req, res, next) {
       } catch {
         res.status(400).json({
           error: "Invalid ownerid"
+        });
+        return;
+      }
+
+      if (req.locals.userid !== business.ownerid) {
+        res.status(401).json({
+          "error": "authenticated user does not match business owner id"
         });
         return;
       }
