@@ -40,7 +40,7 @@ router.post('/', requireAuthorization, async function (req, res, next) {
       return;
     }
 
-    if (req.locals.userid !== photo.userid) {
+    if (req.locals.userid !== photo.userid && !req.locals.admin) {
       res.status(401).json({
         "error": "authenticated user does not match photo user id"
       });
@@ -131,7 +131,7 @@ router.put('/:photoID', requireAuthorization, async function (req, res, next) {
         return;
       }
 
-      if (req.locals.userid !== photo.userid) {
+      if (req.locals.userid !== photo.userid && !req.locals.admin) {
         res.status(401).json({
           "error": "authenticated user does not match photo user id"
         });

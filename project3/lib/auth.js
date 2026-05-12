@@ -20,7 +20,7 @@ module.exports = {
       }
 
       const payload = jwt.verify(token, process.env.JWT_SECRET_KEY);
-      req.locals = { userid: payload.userid };
+      req.locals = { userid: payload.userid, admin: payload.admin };
       next();
     } catch (err) {
       res.status(400).json({

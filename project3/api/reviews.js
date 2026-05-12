@@ -42,7 +42,7 @@ router.post('/', requireAuthorization, async function (req, res, next) {
       return;
     }
 
-    if (req.locals.userid !== review.userid) {
+    if (req.locals.userid !== review.userid && !req.locals.admin) {
       res.status(401).json({
         "error": "authenticated user does not match review user id"
       });
@@ -148,7 +148,7 @@ router.put('/:reviewID', requireAuthorization, async function (req, res, next) {
         return;
       }
 
-      if (req.locals.userid !== review.userid) {
+      if (req.locals.userid !== review.userid && !req.locals.admin) {
         res.status(401).json({
           "error": "authenticated user does not match review user id"
         });

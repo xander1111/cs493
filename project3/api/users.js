@@ -35,7 +35,7 @@ router.get('/:userid/businesses', requireAuthorization, async function (req, res
     return;
   }
 
-  if (req.locals.userid !== userid) {
+  if (req.locals.userid !== userid && !req.locals.admin) {
     res.status(401).json({
       "error": "user not authorized to access this resource"
     });
@@ -86,7 +86,7 @@ router.get('/:userid/reviews', requireAuthorization, async function (req, res, n
     return;
   }
 
-  if (req.locals.userid !== userid) {
+  if (req.locals.userid !== userid && !req.locals.admin) {
     res.status(401).json({
       "error": "user not authorized to access this resource"
     });
@@ -115,7 +115,7 @@ router.get('/:userid/photos', requireAuthorization, async function (req, res, ne
     return;
   }
 
-  if (req.locals.userid !== userid) {
+  if (req.locals.userid !== userid && !req.locals.admin) {
     res.status(401).json({
       "error": "user not authorized to access this resource"
     });
@@ -202,7 +202,7 @@ router.post('/:userid', async function (res, req, next) {
     const valid_login = await bcrypt.compare(loginDetails.password, password_hash);
 
     if (valid_login) {
-      const payload = { "userid": userid };
+      const payload = { "userid": userid, "admin": user.admin ?? false };
       const expiration = { "expiresIn": "24h" };
       const token = jwt.sign(payload, process.env.JWT_SECRET_KEY, expiration);
 
@@ -234,7 +234,7 @@ router.get('/:userid', requireAuthorization, async function (res, req, next) {
     return;
   }
 
-  if (req.locals.userid !== userid) {
+  if (req.locals.userid !== userid && !req.locals.admin) {
     res.status(401).json({
       "error": "user not authorized to access this resource"
     });
