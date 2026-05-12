@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { ObjectId } = require('mongodb');
 
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
+const { requireAuthorization } = require('../lib/auth');
 
 const { reviews } = require('./reviews');
 const { photos } = require('./photos');
@@ -102,18 +103,25 @@ router.get('/', async function (req, res) {
 /*
  * Route to create a new business.
  */
-router.post('/', async function (req, res, next) {
+router.post('/', requireAuthorization, async function (req, res, next) {
   if (validateAgainstSchema(req.body, businessSchema)) {
     const business = extractValidFields(req.body, businessSchema);
     try {
-      business.ownerid = new ObjectId (business.ownerid);
+      business.ownerid = new ObjectId(business.ownerid);
     } catch {
       res.status(400).json({
         error: "Invalid ownerid"
       });
       return;
     }
-    
+
+    if (req.locals.userid !== business.ownerid) {
+      res.status(401).json({
+        "error": "authenticated user does not match business owner id"
+      });
+      return;
+    }
+
     const collection = req.app.locals.db.collection('businesses');
 
     const result = await collection.insertOne(business);
@@ -196,7 +204,7 @@ router.put('/:businessid', async function (req, res, next) {
     if (validateAgainstSchema(req.body, businessSchema)) {
       const newBusiness = extractValidFields(req.body, businessSchema);
       try {
-        newBusiness.ownerid = new ObjectId (newBusiness.ownerid);
+        newBusiness.ownerid = new ObjectId(newBusiness.ownerid);
       } catch {
         res.status(400).json({
           error: "Invalid ownerid"

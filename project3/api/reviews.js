@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { ObjectId } = require('mongodb');
 
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
+const { requireAuthorization } = require('../lib/auth');
 
 exports.router = router;
 
@@ -20,7 +21,7 @@ const reviewSchema = {
 /*
  * Route to create a new review.
  */
-router.post('/', async function (req, res, next) {
+router.post('/', requireAuthorization, async function (req, res, next) {
   if (validateAgainstSchema(req.body, reviewSchema)) {
 
     const review = extractValidFields(req.body, reviewSchema);
@@ -37,6 +38,13 @@ router.post('/', async function (req, res, next) {
     } catch {
       res.status(400).json({
         error: "Invalid userid"
+      });
+      return;
+    }
+
+    if (req.locals.userid !== review.userid) {
+      res.status(401).json({
+        "error": "authenticated user does not match review user id"
       });
       return;
     }

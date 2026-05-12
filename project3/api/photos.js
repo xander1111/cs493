@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { ObjectId } = require('mongodb');
 
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
+const { requireAuthorization } = require('../lib/auth');
 
 exports.router = router;
 
@@ -18,7 +19,7 @@ const photoSchema = {
 /*
  * Route to create a new photo.
  */
-router.post('/', async function (req, res, next) {
+router.post('/', requireAuthorization, async function (req, res, next) {
   if (validateAgainstSchema(req.body, photoSchema)) {
     let photo = extractValidFields(req.body, photoSchema);
     try {
@@ -35,6 +36,13 @@ router.post('/', async function (req, res, next) {
     } catch {
       res.status(400).json({
         error: "Invalid userid"
+      });
+      return;
+    }
+
+    if (req.locals.userid !== photo.userid) {
+      res.status(401).json({
+        "error": "authenticated user does not match photo user id"
       });
       return;
     }
