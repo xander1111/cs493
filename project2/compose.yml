@@ -2,7 +2,7 @@ services:
   mongo-server:
     image: mongo:7.0
     env_file:
-      - .env
+      - example.env
     healthcheck:
       test: ["CMD-SHELL", "mongosh --quiet \"mongodb://$$MONGO_INITDB_ROOT_USERNAME:$$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/admin?authSource=admin\" --eval \"db.adminCommand({ ping: 1 })\""]
       interval: 2s
