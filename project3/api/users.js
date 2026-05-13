@@ -35,7 +35,7 @@ router.get('/:userid/businesses', requireAuthorization, async function (req, res
     return;
   }
 
-  if (req.locals.userid !== userid && !req.locals.admin) {
+  if (req.locals.userid !== userid.toString() && !req.locals.admin) {
     res.status(401).json({
       "error": "user not authorized to access this resource"
     });
@@ -86,7 +86,7 @@ router.get('/:userid/reviews', requireAuthorization, async function (req, res, n
     return;
   }
 
-  if (req.locals.userid !== userid && !req.locals.admin) {
+  if (req.locals.userid !== userid.toString() && !req.locals.admin) {
     res.status(401).json({
       "error": "user not authorized to access this resource"
     });
@@ -115,7 +115,7 @@ router.get('/:userid/photos', requireAuthorization, async function (req, res, ne
     return;
   }
 
-  if (req.locals.userid !== userid && !req.locals.admin) {
+  if (req.locals.userid !== userid.toString() && !req.locals.admin) {
     res.status(401).json({
       "error": "user not authorized to access this resource"
     });
@@ -165,7 +165,8 @@ router.post('/', tryAuthorization, async function (req, res, next) {
     });
 
     res.status(200).json({
-      "status": "ok"
+      "status": "ok",
+      "id": result.insertedId
     });
   } else {
     res.status(400).json({
@@ -174,7 +175,7 @@ router.post('/', tryAuthorization, async function (req, res, next) {
   }
 });
 
-router.post('/:userid', async function (res, req, next) {
+router.post('/:userid', async function (req, res, next) {
   let userid = null;
   try {
     userid = new ObjectId(req.params.userid);
@@ -223,7 +224,7 @@ router.post('/:userid', async function (res, req, next) {
   }
 });
 
-router.get('/:userid', requireAuthorization, async function (res, req, next) {
+router.get('/:userid', requireAuthorization, async function (req, res, next) {
   let userid = null;
   try {
     userid = new ObjectId(req.params.userid);
@@ -234,7 +235,7 @@ router.get('/:userid', requireAuthorization, async function (res, req, next) {
     return;
   }
 
-  if (req.locals.userid !== userid && !req.locals.admin) {
+  if (req.locals.userid !== userid.toString() && !req.locals.admin) {
     res.status(401).json({
       "error": "user not authorized to access this resource"
     });

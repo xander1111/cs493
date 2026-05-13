@@ -9,6 +9,7 @@ const mongoRootDBName = process.env.MONGO_ROOT_DB;
 
 const userName = process.env.MONGO_USER;  // new user name
 const userPassword = process.env.MONGO_USER_PASSWORD;  // new user password
+const dbName = process.env.MONGO_INITDB_DATABASE;  // database to give user permissions in
 
 const mongoURL =
   `mongodb://${mongoUser}:${mongoPassword}@` +
@@ -33,14 +34,14 @@ async function main() {
 
     const client = await MongoClient.connect(mongoURL);
 
-    const db = client.db('project2db');
+    const db = client.db(dbName);
 
     status("database created");
 
     const res = await db.command({
         createUser: userName,
         pwd: userPassword,
-        roles: [ { role: "readWrite", db: "project2db" } ]
+        roles: [ { role: "readWrite", db: dbName } ]
     });
 
     status("user created");

@@ -14,7 +14,7 @@ module.exports = {
       const token = auth_value[1];
 
       if (auth_type !== "Bearer") {
-        res.status(400).json({
+        res.status(401).json({
           "error": "Invalid authorization token"
         });
       }
@@ -23,7 +23,7 @@ module.exports = {
       req.locals = { userid: payload.userid, admin: payload.admin };
       next();
     } catch (err) {
-      res.status(400).json({
+      res.status(401).json({
         "error": "Invalid authorization token"
       });
     }

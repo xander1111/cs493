@@ -115,7 +115,7 @@ router.post('/', requireAuthorization, async function (req, res, next) {
       return;
     }
 
-    if (req.locals.userid !== business.ownerid && !req.locals.admin) {
+    if (req.locals.userid !== business.ownerid.toString() && !req.locals.admin) {
       res.status(401).json({
         "error": "authenticated user does not match business owner id"
       });
@@ -212,7 +212,7 @@ router.put('/:businessid', requireAuthorization, async function (req, res, next)
         return;
       }
 
-      if (req.locals.userid !== business.ownerid && !req.locals.admin) {
+      if (req.locals.userid !== business.ownerid.toString() && !req.locals.admin) {
         res.status(401).json({
           "error": "authenticated user does not match business owner id"
         });

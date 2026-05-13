@@ -13,6 +13,28 @@ default_base_url="http://localhost:$PORT"
 
 #default_verbose=1
 
+
+#########################################################################
+
+status "Setting up test user"
+
+request "/users" \
+    -l "Creating test user" \
+    -p '{"name":"Test User","email":"testuser@example.com","password":"password"}' \
+    --expect-code 200 
+
+userid=$(extract_field id)
+info "Created user $userid"
+
+request "/users/$userid" \
+    -l "Logging in test user" \
+    -m "POST" \
+    -p '{"email":"testuser@example.com","password":"password"}' \
+    --expect-code 200 
+
+token=$(extract_field token)
+info "Got token $token"
+
 #########################################################################
 status "Testing Businesses"
 
@@ -30,7 +52,8 @@ request "/businesses/000000000000000000000000" \
 
 request "/businesses" \
     -l "Posting a new business" \
-    -p '{"ownerid":"aaaaaaaaaaaaaaaaaaaaaaa0","name":"New business 1","address":"123 Sample Ave.","city":"Sample City","state":"OR","zip":"97333","phone":"541-758-9999","category":"Restaurant","subcategory":"Brewpub","website":"http://example.com/1"}' \
+    -p '{"ownerid":"'$userid'","name":"New business 1","address":"123 Sample Ave.","city":"Sample City","state":"OR","zip":"97333","phone":"541-758-9999","category":"Restaurant","subcategory":"Brewpub","website":"http://example.com/1"}' \
+    -a "$token" \
     --expect-code 201 \
 
 id=$(extract_field id)
@@ -44,17 +67,20 @@ request "/businesses/$id" \
     -l "Updating business $id name with invalid ownerid" \
     -m "PUT" \
     -p '{"ownerid":"1","name":"Renamed business 1","address":"123 Sample Ave.","city":"Sample City","state":"OR","zip":"97333","phone":"541-758-9999","category":"Restaurant","subcategory":"Brewpub","website":"http://example.com/1"}' \
+    -a "$token" \
     --expect-code 400 \
 
 request "/businesses/$id" \
     -l "Updating business $id name" \
     -m "PUT" \
-    -p '{"ownerid":"aaaaaaaaaaaaaaaaaaaaaaa0","name":"Renamed business 1","address":"123 Sample Ave.","city":"Sample City","state":"OR","zip":"97333","phone":"541-758-9999","category":"Restaurant","subcategory":"Brewpub","website":"http://example.com/1"}' \
+    -p '{"ownerid":"'$userid'","name":"Renamed business 1","address":"123 Sample Ave.","city":"Sample City","state":"OR","zip":"97333","phone":"541-758-9999","category":"Restaurant","subcategory":"Brewpub","website":"http://example.com/1"}' \
+    -a "$token" \
     --expect-code 200 \
 
 request "/businesses/$id" \
     -l "Deleting business $id" \
     -m "DELETE" \
+    -a "$token" \
     --expect-code 204
 
 request "/businesses/$id" \
@@ -66,7 +92,8 @@ status "Testing Photos"
 
 request "/photos" \
     -l "Posting a new photo" \
-    -p '{"userid":"aaaaaaaaaaaaaaaaaaaaaaa1","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","caption":"Test caption"}' \
+    -p '{"userid":"'$userid'","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","caption":"Test caption"}' \
+    -a "$token" \
     --expect-code 201 \
 
 photoid=$(extract_field id)
@@ -88,18 +115,21 @@ request "/photos/$photoid" \
     -l "Updating photo $photoid caption with invalid userid" \
     -m "PUT" \
     -p '{"userid":"1","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","caption":"UPDATED Test caption"}' \
+    -a "$token" \
     --expect-code 400 \
 
 request "/photos/$photoid" \
     -l "Updating photo $photoid caption with invalid businessid" \
     -m "PUT" \
-    -p '{"userid":"aaaaaaaaaaaaaaaaaaaaaaa1","businessid":"1","caption":"UPDATED Test caption"}' \
+    -p '{"userid":"'$userid'","businessid":"1","caption":"UPDATED Test caption"}' \
+    -a "$token" \
     --expect-code 400 \
 
 request "/photos/$photoid" \
     -l "Updating photo $photoid caption" \
     -m "PUT" \
-    -p '{"userid":"aaaaaaaaaaaaaaaaaaaaaaa1","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","caption":"UPDATED Test caption"}' \
+    -p '{"userid":"'$userid'","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","caption":"UPDATED Test caption"}' \
+    -a "$token" \
     --expect-code 200 \
 
 request "/photos/$photoid" \
@@ -116,7 +146,8 @@ status "Testing Reviews"
 
 request "/reviews" \
     -l "Posting a new review" \
-    -p '{"userid":"aaaaaaaaaaaaaaaaaaaaaaa2","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","dollars":1,"stars":5,"review":"Test review"}' \
+    -p '{"userid":"'$userid'","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","dollars":1,"stars":5,"review":"Test review"}' \
+    -a "$token" \
     --expect-code 201 \
 
 reviewid=$(extract_field id)
@@ -138,18 +169,21 @@ request "/reviews/$reviewid" \
     -l "Updating review $reviewid with invalid userid" \
     -m "PUT" \
     -p '{"userid":"1","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","dollars":4,"stars":3,"review":"UPDATED Test review"}' \
+    -a "$token" \
     --expect-code 400 \
 
 request "/reviews/$reviewid" \
     -l "Updating review $reviewid with invalid businessid" \
     -m "PUT" \
-    -p '{"userid":"aaaaaaaaaaaaaaaaaaaaaaa2","businessid":"1","dollars":4,"stars":3,"review":"UPDATED Test review"}' \
+    -p '{"userid":"'$userid'","businessid":"1","dollars":4,"stars":3,"review":"UPDATED Test review"}' \
+    -a "$token" \
     --expect-code 400 \
 
 request "/reviews/$reviewid" \
     -l "Updating review $reviewid" \
     -m "PUT" \
-    -p '{"userid":"aaaaaaaaaaaaaaaaaaaaaaa2","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","dollars":4,"stars":3,"review":"UPDATED Test review"}' \
+    -p '{"userid":"'$userid'","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","dollars":4,"stars":3,"review":"UPDATED Test review"}' \
+    -a "$token" \
     --expect-code 200 \
 
 request "/reviews/$reviewid" \
@@ -168,27 +202,47 @@ status "Testing Users"
 
 request "/users/999/businesses" \
     -l "Searching for businesses under invalid user id" \
+    -a "$token" \
     --expect-code 400 \
 
 request "/users/999/photos" \
     -l "Searching for photos under invalid user id" \
+    -a "$token" \
     --expect-code 400 \
 
 request "/users/999/reviews" \
     -l "Searching for reviews under invalid user id" \
+    -a "$token" \
     --expect-code 400 \
 
 
-request "/users/aaaaaaaaaaaaaaaaaaaaaaa0/businesses" \
+request "/users/$userid/businesses" \
     -l "Searching for businesses under specific user" \
+    -a "$token" \
     --expect-code 200 \
 
-request "/users/aaaaaaaaaaaaaaaaaaaaaaa1/photos" \
+request "/users/$userid/photos" \
     -l "Searching for photos under specific user" \
+    -a "$token" \
     --expect-code 200 \
 
-request "/users/aaaaaaaaaaaaaaaaaaaaaaa2/reviews" \
+request "/users/$userid/reviews" \
     -l "Searching for reviews under specific user" \
+    -a "$token" \
     --expect-code 200 \
+
+
+
+
+
+
+
+# Authenticated tests
+
+#########################################################################
+
+# TODO: implement tests for authenticated users
+
 
 summary
+
