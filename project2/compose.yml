@@ -14,7 +14,7 @@ services:
   mongo-init:
     build: ./init 
     env_file:
-      - .env
+      - example.env
     environment:
       MONGO_HOST: "mongo-server"
       MONGO_ROOT_DB: "admin"
@@ -27,7 +27,7 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - .env
+      - example.env
     environment:
       MONGO_HOST: "mongo-server"
     depends_on:
