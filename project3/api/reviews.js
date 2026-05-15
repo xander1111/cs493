@@ -43,7 +43,7 @@ router.post('/', requireAuthorization, async function (req, res, next) {
     }
 
     if (req.locals.userid !== review.userid.toString() && !req.locals.admin) {
-      res.status(401).json({
+      res.status(400).json({
         "error": "authenticated user does not match review user id"
       });
       return;
@@ -150,7 +150,7 @@ router.put('/:reviewID', requireAuthorization, async function (req, res, next) {
 
       if (req.locals.userid !== review.userid.toString() && !req.locals.admin) {
         res.status(401).json({
-          "error": "authenticated user does not match review user id"
+          "error": "user not authorized to modify review, authenticated user does not match review user id"
         });
         return;
       }
@@ -166,7 +166,7 @@ router.put('/:reviewID', requireAuthorization, async function (req, res, next) {
           }
         });
       } else {
-        res.status(403).json({
+        res.status(400).json({
           error: "Updated review cannot modify businessid or userid"
         });
       }
@@ -184,7 +184,7 @@ router.put('/:reviewID', requireAuthorization, async function (req, res, next) {
 /*
  * Route to delete a review.
  */
-router.delete('/:reviewID', async function (req, res, next) {
+router.delete('/:reviewID', requireAuthorization, async function (req, res, next) {
   let reviewID = null;
   try {
     reviewID = new ObjectId(req.params.reviewID);
@@ -194,9 +194,18 @@ router.delete('/:reviewID', async function (req, res, next) {
     return;
   }
 
-  const reviewsCollection = req.app.locals.db.collection('reviews');
+  const collection = req.app.locals.db.collection('reviews');
 
-  const result = await reviewsCollection.deleteOne({ _id: reviewID });
+  const review = await collection.findOne({ _id: new ObjectId(reviewID) });
+
+  if (req.locals.userid !== review.userid.toString()) {
+    res.status(401).json({
+      "error": "user not authorized to delete review, authenticated user does not match review user id"
+    });
+    return;
+  }
+
+  const result = await collection.deleteOne({ _id: reviewID });
 
   if (result.deletedCount > 0) {
     res.status(204).end();

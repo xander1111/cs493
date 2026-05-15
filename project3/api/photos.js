@@ -41,7 +41,7 @@ router.post('/', requireAuthorization, async function (req, res, next) {
     }
 
     if (req.locals.userid !== photo.userid.toString() && !req.locals.admin) {
-      res.status(401).json({
+      res.status(400).json({
         "error": "authenticated user does not match photo user id"
       });
       return;
@@ -133,26 +133,29 @@ router.put('/:photoID', requireAuthorization, async function (req, res, next) {
 
       if (req.locals.userid !== photo.userid.toString() && !req.locals.admin) {
         res.status(401).json({
-          "error": "authenticated user does not match photo user id"
+          "error": "user not authorized to modify photo, authenticated userid does not match photo user id"
         });
         return;
       }
 
       const existingPhoto = await photosCollection.findOne({ _id: photoID });
-      if (newPhoto && newPhoto.businessid.equals(existingPhoto.businessid) && newPhoto.userid.equals(existingPhoto.userid)) {
-        const result = await photosCollection.replaceOne({ _id: photoID }, newPhoto);
 
-        res.status(200).json({
-          links: {
-            photo: `/photos/${photoID}`,
-            business: `/businesses/${newPhoto.businessid}`
-          }
-        });
-      } else {
-        res.status(403).json({
+      if (newPhoto && (!newPhoto.businessid.equals(existingPhoto.businessid) || !newPhoto.userid.equals(existingPhoto.userid)) && !req.locals.admin) {
+        res.status(400).json({
           error: "Updated photo cannot modify businessid or userid"
         });
+        return;
       }
+
+      const result = await photosCollection.replaceOne({ _id: photoID }, newPhoto);
+
+      res.status(200).json({
+        links: {
+          photo: `/photos/${photoID}`,
+          business: `/businesses/${newPhoto.businessid}`
+        }
+      });
+  
     } else {
       res.status(400).json({
         error: "Request body is not a valid photo object"
@@ -167,7 +170,7 @@ router.put('/:photoID', requireAuthorization, async function (req, res, next) {
 /*
  * Route to delete a photo.
  */
-router.delete('/:photoID', async function (req, res, next) {
+router.delete('/:photoID', requireAuthorization, async function (req, res, next) {
   let photoID = null;
   try {
     photoID = new ObjectId(req.params.photoID);
@@ -177,9 +180,18 @@ router.delete('/:photoID', async function (req, res, next) {
     return;
   }
 
-  const photosCollection = req.app.locals.db.collection('photos');
+  const collection = req.app.locals.db.collection('photos');
 
-  const result = await photosCollection.deleteOne({ _id: photoID });
+  const photo = await collection.findOne({ _id: new ObjectId(photoID) });
+
+  if (req.locals.userid !== photo.userid.toString()) {
+    res.status(401).json({
+      "error": "user not authorized to delete photo, authenticated user does not match photo user id"
+    });
+    return;
+  }
+
+  const result = await collection.deleteOne({ _id: photoID });
 
   if (result.deletedCount > 0) {
     res.status(204).end();

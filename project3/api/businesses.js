@@ -116,7 +116,7 @@ router.post('/', requireAuthorization, async function (req, res, next) {
     }
 
     if (req.locals.userid !== business.ownerid.toString() && !req.locals.admin) {
-      res.status(401).json({
+      res.status(400).json({
         "error": "authenticated user does not match business owner id"
       });
       return;
@@ -214,7 +214,14 @@ router.put('/:businessid', requireAuthorization, async function (req, res, next)
 
       if (req.locals.userid !== business.ownerid.toString() && !req.locals.admin) {
         res.status(401).json({
-          "error": "authenticated user does not match business owner id"
+          "error": "user not authorized to modify business, authenticated user does not match business owner id"
+        });
+        return;
+      }
+
+      if (!business.ownerid.equals(newBusiness.ownerid) && !req.locals.admin) {
+        res.status(400).json({
+          "error": "new business ownerid must match old business ownerid"
         });
         return;
       }
@@ -240,7 +247,7 @@ router.put('/:businessid', requireAuthorization, async function (req, res, next)
 /*
  * Route to delete a business.
  */
-router.delete('/:businessid', async function (req, res, next) {
+router.delete('/:businessid', requireAuthorization, async function (req, res, next) {
   let businessid = null;
   try {
     businessid = new ObjectId(req.params.businessid);
@@ -252,6 +259,16 @@ router.delete('/:businessid', async function (req, res, next) {
   }
 
   const collection = req.app.locals.db.collection('businesses');
+
+  const business = await collection.findOne({ _id: new ObjectId(businessid) });
+
+  if (req.locals.userid !== business.ownerid.toString()) {
+    res.status(401).json({
+      "error": "user not authorized to delete business, authenticated user does not match business owner id"
+    });
+    return;
+  }
+
   const result = await collection.deleteOne({ _id: new ObjectId(businessid) });
 
   if (result.deletedCount > 0) {

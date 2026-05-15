@@ -35,6 +35,40 @@ request "/users/$userid" \
 token=$(extract_field token)
 info "Got token $token"
 
+request "/users" \
+    -l "Creating secondary test user" \
+    -p '{"name":"Test User 2","email":"testuser2@example.com","password":"password2"}' \
+    --expect-code 200 
+
+userid_b=$(extract_field id)
+info "Created user $userid_b"
+
+request "/users/$userid_b" \
+    -l "Logging in secondary test user" \
+    -m "POST" \
+    -p '{"email":"testuser2@example.com","password":"password2"}' \
+    --expect-code 200 
+
+token_b=$(extract_field token)
+info "Got token $token_b"
+
+request "/users" \
+    -l "Creating user with a username already in use" \
+    -p '{"name":"Test User","email":"unused@example.com","password":"password"}' \
+    --expect-code 409
+
+request "/users" \
+    -l "Creating user with an email already in use" \
+    -p '{"name":"Test User 3","email":"testuser@example.com","password":"password"}' \
+    --expect-code 409
+
+
+request "/users/$userid" \
+    -l "Logging in with invalid details" \
+    -m "POST" \
+    -p '{"email":"testuser@example.com","password":"incorrect"}' \
+    --expect-code 401
+
 #########################################################################
 status "Testing Businesses"
 
@@ -51,6 +85,17 @@ request "/businesses/000000000000000000000000" \
     --expect-code 404 \
 
 request "/businesses" \
+    -l "Posting a new business without authentication" \
+    -p '{"ownerid":"'$userid'","name":"New business 1","address":"123 Sample Ave.","city":"Sample City","state":"OR","zip":"97333","phone":"541-758-9999","category":"Restaurant","subcategory":"Brewpub","website":"http://example.com/1"}' \
+    --expect-code 401 \
+
+request "/businesses" \
+    -l "Posting a new business with different owner id" \
+    -p '{"ownerid":"aaaaaaaaaaaaaaaaaaaaaaa0","name":"New business 1","address":"123 Sample Ave.","city":"Sample City","state":"OR","zip":"97333","phone":"541-758-9999","category":"Restaurant","subcategory":"Brewpub","website":"http://example.com/1"}' \
+    -a "$token" \
+    --expect-code 400 \
+
+request "/businesses" \
     -l "Posting a new business" \
     -p '{"ownerid":"'$userid'","name":"New business 1","address":"123 Sample Ave.","city":"Sample City","state":"OR","zip":"97333","phone":"541-758-9999","category":"Restaurant","subcategory":"Brewpub","website":"http://example.com/1"}' \
     -a "$token" \
@@ -64,9 +109,29 @@ request "/businesses/$id" \
     --expect-code 200 \
 
 request "/businesses/$id" \
+    -l "Updating business $id name without authentication" \
+    -m "PUT" \
+    -p '{"ownerid":"'$id'","name":"Renamed business 1","address":"123 Sample Ave.","city":"Sample City","state":"OR","zip":"97333","phone":"541-758-9999","category":"Restaurant","subcategory":"Brewpub","website":"http://example.com/1"}' \
+    --expect-code 401 \
+
+request "/businesses/$id" \
+    -l "Updating business $id name from unauthorized user" \
+    -m "PUT" \
+    -p '{"ownerid":"'$id'","name":"Renamed business 1","address":"123 Sample Ave.","city":"Sample City","state":"OR","zip":"97333","phone":"541-758-9999","category":"Restaurant","subcategory":"Brewpub","website":"http://example.com/1"}' \
+    -a "$token_b" \
+    --expect-code 401 \
+
+request "/businesses/$id" \
     -l "Updating business $id name with invalid ownerid" \
     -m "PUT" \
-    -p '{"ownerid":"1","name":"Renamed business 1","address":"123 Sample Ave.","city":"Sample City","state":"OR","zip":"97333","phone":"541-758-9999","category":"Restaurant","subcategory":"Brewpub","website":"http://example.com/1"}' \
+    -p '{"ownerid":"'$id'","name":"Renamed business 1","address":"123 Sample Ave.","city":"Sample City","state":"OR","zip":"97333","phone":"541-758-9999","category":"Restaurant","subcategory":"Brewpub","website":"http://example.com/1"}' \
+    -a "$token" \
+    --expect-code 400 \
+
+request "/businesses/$id" \
+    -l "Updating business $id name with different ownerid" \
+    -m "PUT" \
+    -p '{"ownerid":"aaaaaaaaaaaaaaaaaaaaaaa0","name":"Renamed business 1","address":"123 Sample Ave.","city":"Sample City","state":"OR","zip":"97333","phone":"541-758-9999","category":"Restaurant","subcategory":"Brewpub","website":"http://example.com/1"}' \
     -a "$token" \
     --expect-code 400 \
 
@@ -76,6 +141,17 @@ request "/businesses/$id" \
     -p '{"ownerid":"'$userid'","name":"Renamed business 1","address":"123 Sample Ave.","city":"Sample City","state":"OR","zip":"97333","phone":"541-758-9999","category":"Restaurant","subcategory":"Brewpub","website":"http://example.com/1"}' \
     -a "$token" \
     --expect-code 200 \
+
+request "/businesses/$id" \
+    -l "Deleting business $id without authentication" \
+    -m "DELETE" \
+    --expect-code 401
+
+request "/businesses/$id" \
+    -l "Deleting business $id from unauthorized user" \
+    -m "DELETE" \
+    -a "$token_b" \
+    --expect-code 401
 
 request "/businesses/$id" \
     -l "Deleting business $id" \
@@ -89,6 +165,17 @@ request "/businesses/$id" \
 
 #########################################################################
 status "Testing Photos"
+
+request "/photos" \
+    -l "Posting a new photo without authentication" \
+    -p '{"userid":"'$userid'","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","caption":"Test caption"}' \
+    --expect-code 401 \
+
+request "/photos" \
+    -l "Posting a new photo with different userid" \
+    -p '{"userid":"aaaaaaaaaaaaaaaaaaaaaaa0","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","caption":"Test caption"}' \
+    -a "$token" \
+    --expect-code 400 \
 
 request "/photos" \
     -l "Posting a new photo" \
@@ -112,6 +199,26 @@ request "/photos/$photoid" \
     --expect-code 200 \
 
 request "/photos/$photoid" \
+    -l "Updating photo $photoid caption without authentication" \
+    -m "PUT" \
+    -p '{"userid":"'$userid'","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","caption":"UPDATED Test caption"}' \
+    --expect-code 401 \
+
+request "/photos/$photoid" \
+    -l "Updating photo $photoid from unauthorized user" \
+    -m "PUT" \
+    -p '{"userid":"'$userid'","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","caption":"UPDATED Test caption"}' \
+    -a "$token_b" \
+    --expect-code 401 \
+
+request "/photos/$photoid" \
+    -l "Updating photo $photoid caption with different userid" \
+    -m "PUT" \
+    -p '{"userid":"aaaaaaaaaaaaaaaaaaaaaaa0","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","caption":"UPDATED Test caption"}' \
+    -a "$token" \
+    --expect-code 400 \
+
+request "/photos/$photoid" \
     -l "Updating photo $photoid caption with invalid userid" \
     -m "PUT" \
     -p '{"userid":"1","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","caption":"UPDATED Test caption"}' \
@@ -133,8 +240,20 @@ request "/photos/$photoid" \
     --expect-code 200 \
 
 request "/photos/$photoid" \
+    -l "Deleting photo $photoid without authentication" \
+    -m "DELETE" \
+    --expect-code 401
+
+request "/photos/$photoid" \
+    -l "Deleting photo $photoid from unauthorized user" \
+    -m "DELETE" \
+    -a "$token_b" \
+    --expect-code 401
+
+request "/photos/$photoid" \
     -l "Deleting photo $photoid" \
     -m "DELETE" \
+    -a "$token" \
     --expect-code 204
 
 request "/photos/$photoid" \
@@ -143,6 +262,17 @@ request "/photos/$photoid" \
 
 #########################################################################
 status "Testing Reviews"
+
+request "/reviews" \
+    -l "Posting a new review without authentication" \
+    -p '{"userid":"'$userid'","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","dollars":1,"stars":5,"review":"Test review"}' \
+    --expect-code 401 \
+
+request "/reviews" \
+    -l "Posting a new review with different userid" \
+    -p '{"userid":"aaaaaaaaaaaaaaaaaaaaaaa0","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","dollars":1,"stars":5,"review":"Test review"}' \
+    -a "$token" \
+    --expect-code 400 \
 
 request "/reviews" \
     -l "Posting a new review" \
@@ -166,6 +296,26 @@ request "/reviews/$reviewid" \
     --expect-code 200 \
 
 request "/reviews/$reviewid" \
+    -l "Updating review $reviewid without authentication" \
+    -m "PUT" \
+    -p '{"userid":"'$userid'","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","dollars":4,"stars":3,"review":"UPDATED Test review"}' \
+    --expect-code 401 \
+
+request "/reviews/$reviewid" \
+    -l "Updating review $reviewid from unauthorized user" \
+    -m "PUT" \
+    -p '{"userid":"'$userid'","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","dollars":4,"stars":3,"review":"UPDATED Test review"}' \
+    -a "$token_b" \
+    --expect-code 401 \
+
+request "/reviews/$reviewid" \
+    -l "Updating review $reviewid with different userid" \
+    -m "PUT" \
+    -p '{"userid":"aaaaaaaaaaaaaaaaaaaaaaa0","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","dollars":4,"stars":3,"review":"UPDATED Test review"}' \
+    -a "$token" \
+    --expect-code 400 \
+
+request "/reviews/$reviewid" \
     -l "Updating review $reviewid with invalid userid" \
     -m "PUT" \
     -p '{"userid":"1","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","dollars":4,"stars":3,"review":"UPDATED Test review"}' \
@@ -187,8 +337,20 @@ request "/reviews/$reviewid" \
     --expect-code 200 \
 
 request "/reviews/$reviewid" \
+    -l "Deleting review $reviewid without authentication" \
+    -m "DELETE" \
+    --expect-code 401
+
+request "/reviews/$reviewid" \
+    -l "Deleting review $reviewid from unauthorized user" \
+    -m "DELETE" \
+    -a "$token_b" \
+    --expect-code 401
+
+request "/reviews/$reviewid" \
     -l "Deleting review $reviewid" \
     -m "DELETE" \
+    -a "$token" \
     --expect-code 204
 
 request "/reviews/$reviewid" \
@@ -217,9 +379,27 @@ request "/users/999/reviews" \
 
 
 request "/users/$userid/businesses" \
+    -l "Searching for businesses under specific user without authentication" \
+    --expect-code 401 \
+    
+request "/users/$userid/businesses" \
+    -l "Searching for businesses under specific user from unauthorized user" \
+    -a "$token_b" \
+    --expect-code 401 \
+
+request "/users/$userid/businesses" \
     -l "Searching for businesses under specific user" \
     -a "$token" \
     --expect-code 200 \
+
+request "/users/$userid/photos" \
+    -l "Searching for photos under specific user without authentication" \
+    --expect-code 401 \
+
+request "/users/$userid/photos" \
+    -l "Searching for photos under specific user from unauthorized user" \
+    -a "$token_b" \
+    --expect-code 401 \
 
 request "/users/$userid/photos" \
     -l "Searching for photos under specific user" \
@@ -227,22 +407,18 @@ request "/users/$userid/photos" \
     --expect-code 200 \
 
 request "/users/$userid/reviews" \
+    -l "Searching for reviews under specific user without authentication" \
+    --expect-code 401 \
+
+request "/users/$userid/reviews" \
+    -l "Searching for reviews under specific user from unauthorized user" \
+    -a "$token_b" \
+    --expect-code 401 \
+
+request "/users/$userid/reviews" \
     -l "Searching for reviews under specific user" \
     -a "$token" \
     --expect-code 200 \
-
-
-
-
-
-
-
-# Authenticated tests
-
-#########################################################################
-
-# TODO: implement tests for authenticated users
-
 
 summary
 
