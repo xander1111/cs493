@@ -25,15 +25,14 @@ const loginSchema = {
  * Route to list all of a user's businesses.
  */
 router.get('/:userid/businesses', requireAuthorization, async function (req, res, next) {
-  let userid = null;
-  try {
-    userid = new ObjectId(req.params.userid);
-  } catch (error) {
+  if (!ObjectId.isValid(req.params.userid)) {
     res.status(400).json({
       error: "Invalid userid"
     });
     return;
   }
+
+  const userid = new ObjectId(req.params.userid);
 
   if (req.locals.userid !== userid.toString() && !req.locals.admin) {
     res.status(401).json({
@@ -76,15 +75,14 @@ router.get('/:userid/businesses', requireAuthorization, async function (req, res
  * Route to list all of a user's reviews.
  */
 router.get('/:userid/reviews', requireAuthorization, async function (req, res, next) {
-  let userid = null;
-  try {
-    userid = new ObjectId(req.params.userid);
-  } catch (error) {
+  if (!ObjectId.isValid(req.params.userid)) {
     res.status(400).json({
       error: "Invalid userid"
     });
     return;
   }
+
+  const userid = new ObjectId(req.params.userid);
 
   if (req.locals.userid !== userid.toString() && !req.locals.admin) {
     res.status(401).json({
@@ -105,15 +103,14 @@ router.get('/:userid/reviews', requireAuthorization, async function (req, res, n
  * Route to list all of a user's photos.
  */
 router.get('/:userid/photos', requireAuthorization, async function (req, res, next) {
-  let userid = null;
-  try {
-    userid = new ObjectId(req.params.userid);
-  } catch (error) {
+  if (!ObjectId.isValid(req.params.userid)) {
     res.status(400).json({
       error: "Invalid userid"
     });
     return;
   }
+
+  const userid = new ObjectId(req.params.userid);
 
   if (req.locals.userid !== userid.toString() && !req.locals.admin) {
     res.status(401).json({
@@ -176,15 +173,14 @@ router.post('/', tryAuthorization, async function (req, res, next) {
 });
 
 router.post('/:userid', async function (req, res, next) {
-  let userid = null;
-  try {
-    userid = new ObjectId(req.params.userid);
-  } catch (error) {
+  if (!ObjectId.isValid(req.params.userid)) {
     res.status(400).json({
       error: "Invalid userid"
     });
     return;
   }
+
+  const userid = new ObjectId(req.params.userid);
 
   if (validateAgainstSchema(req.body, loginSchema)) {
     const collection = req.app.locals.db.collection("users");
@@ -225,15 +221,14 @@ router.post('/:userid', async function (req, res, next) {
 });
 
 router.get('/:userid', requireAuthorization, async function (req, res, next) {
-  let userid = null;
-  try {
-    userid = new ObjectId(req.params.userid);
-  } catch (error) {
+  if (!ObjectId.isValid(req.params.userid)) {
     res.status(400).json({
-      "error": "Invalid userid"
+      error: "Invalid userid"
     });
     return;
   }
+
+  const userid = new ObjectId(req.params.userid);
 
   if (req.locals.userid !== userid.toString() && !req.locals.admin) {
     res.status(401).json({

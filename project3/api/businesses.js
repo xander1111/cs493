@@ -106,14 +106,14 @@ router.get('/', async function (req, res) {
 router.post('/', requireAuthorization, async function (req, res, next) {
   if (validateAgainstSchema(req.body, businessSchema)) {
     const business = extractValidFields(req.body, businessSchema);
-    try {
-      business.ownerid = new ObjectId(business.ownerid);
-    } catch {
+
+    if (!ObjectId.isValid(business.ownerid)) {
       res.status(400).json({
         error: "Invalid ownerid"
       });
       return;
     }
+    business.ownerid = new ObjectId(business.ownerid);
 
     if (req.locals.userid !== business.ownerid.toString() && !req.locals.admin) {
       res.status(400).json({
@@ -143,15 +143,13 @@ router.post('/', requireAuthorization, async function (req, res, next) {
  * Route to fetch info about a specific business.
  */
 router.get('/:businessid', async function (req, res, next) {
-  let businessid = null;
-  try {
-    businessid = new ObjectId(req.params.businessid);
-  } catch (error) {
+  if (!ObjectId.isValid(req.params.businessid)) {
     res.status(400).json({
       error: "Invalid businessid"
     });
     return;
   }
+  const businessid = new ObjectId(req.params.businessid);
 
   const businessesCollection = req.app.locals.db.collection('businesses');
   const pipeline = [
@@ -187,15 +185,13 @@ router.get('/:businessid', async function (req, res, next) {
  * Route to replace data for a business.
  */
 router.put('/:businessid', requireAuthorization, async function (req, res, next) {
-  let businessid = null;
-  try {
-    businessid = new ObjectId(req.params.businessid);
-  } catch (error) {
+  if (!ObjectId.isValid(req.params.businessid)) {
     res.status(400).json({
       error: "Invalid businessid"
     });
     return;
   }
+  const businessid = new ObjectId(req.params.businessid);
 
   const businessesCollection = req.app.locals.db.collection('businesses');
   const business = await businessesCollection.findOne({ _id: businessid });
@@ -203,14 +199,14 @@ router.put('/:businessid', requireAuthorization, async function (req, res, next)
   if (business) {
     if (validateAgainstSchema(req.body, businessSchema)) {
       const newBusiness = extractValidFields(req.body, businessSchema);
-      try {
-        newBusiness.ownerid = new ObjectId(newBusiness.ownerid);
-      } catch {
+
+      if (!ObjectId.isValid(newBusiness.ownerid)) {
         res.status(400).json({
           error: "Invalid ownerid"
         });
         return;
       }
+      newBusiness.ownerid = new ObjectId(newBusiness.ownerid);
 
       if (req.locals.userid !== business.ownerid.toString() && !req.locals.admin) {
         res.status(401).json({
@@ -248,15 +244,13 @@ router.put('/:businessid', requireAuthorization, async function (req, res, next)
  * Route to delete a business.
  */
 router.delete('/:businessid', requireAuthorization, async function (req, res, next) {
-  let businessid = null;
-  try {
-    businessid = new ObjectId(req.params.businessid);
-  } catch (error) {
+  if (!ObjectId.isValid(req.params.businessid)) {
     res.status(400).json({
       error: "Invalid businessid"
     });
     return;
   }
+  const businessid = new ObjectId(req.params.businessid);
 
   const collection = req.app.locals.db.collection('businesses');
 

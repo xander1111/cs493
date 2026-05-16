@@ -22,23 +22,22 @@ const photoSchema = {
 router.post('/', requireAuthorization, async function (req, res, next) {
   if (validateAgainstSchema(req.body, photoSchema)) {
     let photo = extractValidFields(req.body, photoSchema);
-    try {
-      photo.businessid = new ObjectId(photo.businessid);
-    } catch {
+
+    if (!ObjectId.isValid(photo.businessid)) {
       res.status(400).json({
         error: "Invalid businessid"
       });
       return;
     }
+    photo.businessid = new ObjectId(photo.businessid);
 
-    try {
-      photo.userid = new ObjectId(photo.userid);
-    } catch {
+    if (!ObjectId.isValid(photo.userid)) {
       res.status(400).json({
         error: "Invalid userid"
       });
       return;
     }
+    photo.userid = new ObjectId(photo.userid);
 
     if (req.locals.userid !== photo.userid.toString() && !req.locals.admin) {
       res.status(400).json({
@@ -69,15 +68,13 @@ router.post('/', requireAuthorization, async function (req, res, next) {
  * Route to fetch info about a specific photo.
  */
 router.get('/:photoID', async function (req, res, next) {
-  let photoID = null;
-  try {
-    photoID = new ObjectId(req.params.photoID);
-  } catch (error) {
+  if (!ObjectId.isValid(req.params.photoID)) {
     res.status(400).json({
-      error: "Invalid photoid"
+      error: "Invalid photo id"
     });
     return;
   }
+  const photoID = new ObjectId(req.params.photoID);
 
   const photosCollection = req.app.locals.db.collection('photos');
 
@@ -94,14 +91,13 @@ router.get('/:photoID', async function (req, res, next) {
  * Route to update a photo.
  */
 router.put('/:photoID', requireAuthorization, async function (req, res, next) {
-  let photoID = null;
-  try {
-    photoID = new ObjectId(req.params.photoID);
-  } catch (error) {
-    // Invalid ID format
-    next();
+  if (!ObjectId.isValid(req.params.photoID)) {
+    res.status(400).json({
+      error: "Invalid photo id"
+    });
     return;
   }
+  const photoID = new ObjectId(req.params.photoID);
 
   const photosCollection = req.app.locals.db.collection('photos');
 
@@ -114,22 +110,22 @@ router.put('/:photoID', requireAuthorization, async function (req, res, next) {
        * the existing photo.
        */
       const newPhoto = extractValidFields(req.body, photoSchema);
-      try {
-        newPhoto.businessid = new ObjectId(newPhoto.businessid);
-      } catch {
+
+      if (!ObjectId.isValid(newPhoto.businessid)) {
         res.status(400).json({
           error: "Invalid businessid"
         });
         return;
       }
-      try {
-        newPhoto.userid = new ObjectId(newPhoto.userid);
-      } catch {
+      newPhoto.businessid = new ObjectId(newPhoto.businessid);
+
+      if (!ObjectId.isValid(newPhoto.userid)) {
         res.status(400).json({
           error: "Invalid userid"
         });
         return;
       }
+      newPhoto.userid = new ObjectId(newPhoto.userid);
 
       if (req.locals.userid !== photo.userid.toString() && !req.locals.admin) {
         res.status(401).json({
@@ -155,7 +151,7 @@ router.put('/:photoID', requireAuthorization, async function (req, res, next) {
           business: `/businesses/${newPhoto.businessid}`
         }
       });
-  
+
     } else {
       res.status(400).json({
         error: "Request body is not a valid photo object"
@@ -171,14 +167,13 @@ router.put('/:photoID', requireAuthorization, async function (req, res, next) {
  * Route to delete a photo.
  */
 router.delete('/:photoID', requireAuthorization, async function (req, res, next) {
-  let photoID = null;
-  try {
-    photoID = new ObjectId(req.params.photoID);
-  } catch (error) {
-    // Invalid ID format
-    next();
+  if (!ObjectId.isValid(req.params.photoID)) {
+    res.status(400).json({
+      error: "Invalid photo id"
+    });
     return;
   }
+  const photoID = new ObjectId(req.params.photoID);
 
   const collection = req.app.locals.db.collection('photos');
 
