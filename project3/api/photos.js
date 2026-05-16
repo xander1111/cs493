@@ -179,6 +179,11 @@ router.delete('/:photoID', requireAuthorization, async function (req, res, next)
 
   const photo = await collection.findOne({ _id: new ObjectId(photoID) });
 
+  if (!photo) {
+    next();  // Returns 404 error
+    return;
+  }
+
   if (req.locals.userid !== photo.userid.toString()) {
     res.status(401).json({
       "error": "user not authorized to delete photo, authenticated user does not match photo user id"

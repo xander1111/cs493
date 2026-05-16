@@ -256,6 +256,11 @@ router.delete('/:businessid', requireAuthorization, async function (req, res, ne
 
   const business = await collection.findOne({ _id: new ObjectId(businessid) });
 
+  if (!business) {
+    next();  // Returns 404 error
+    return;
+  }
+
   if (req.locals.userid !== business.ownerid.toString()) {
     res.status(401).json({
       "error": "user not authorized to delete business, authenticated user does not match business owner id"

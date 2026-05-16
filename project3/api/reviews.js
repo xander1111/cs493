@@ -192,6 +192,11 @@ router.delete('/:reviewID', requireAuthorization, async function (req, res, next
 
   const review = await collection.findOne({ _id: new ObjectId(reviewID) });
 
+  if (!review) {
+    next();  // Returns 404 error
+    return;
+  }
+  
   if (req.locals.userid !== review.userid.toString()) {
     res.status(401).json({
       "error": "user not authorized to delete review, authenticated user does not match review user id"
