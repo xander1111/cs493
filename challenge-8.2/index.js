@@ -60,6 +60,11 @@ async function readFile(req, res, next) {
 
     const downloadStream = gfs_bucket.openDownloadStreamByName(req.params.filename);
 
+    downloadStream.on('error', err => {
+        res.status(400).send({ error: err });
+        return;
+    });
+
     req.downloadStream = downloadStream;
     next();
 }
