@@ -4,6 +4,8 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 const { MongoClient, ObjectId, GridFSBucket } = require('mongodb');
+const multer = require('multer');
+const { Readable } = require('stream');
 
 app.use(express.json());
 
@@ -14,22 +16,64 @@ const mongoPassword = process.env.MONGO_TUSER_PASSWORD;
 const mongoDBName = process.env.MONGO_TUSER_DB;
 
 const mongoURL =
-  `mongodb://${mongoUser}:${mongoPassword}@` +
-  `${mongoHost}:${mongoPort}/${mongoDBName}`;
+    `mongodb://${mongoUser}:${mongoPassword}@` +
+    `${mongoHost}:${mongoPort}/${mongoDBName}`;
 
 const port = 8086;
 
 let db;
 
+const upload = multer({ storage: multer.memoryStorage() });
+
+let gfs_bucket = undefined;
+
+function storeFile(req, res, next) {
+    // Convenience variable that refers to the file that was uploaded.
+    const file = req.file;
+
+    // Open a writable stream into GridFS that will store the file with
+    // filename `originalname`. Also, attach the file MIME type as
+    // metadata for later use by the GETter.
+    const uploadStream = gfs_bucket.openUploadStream(file.originalname, {
+        metadata: { contentType: file.mimetype },
+    });
+
+    // Multer stored the file in memory in file.buffer. Pipe it into
+    // GridFS tos store it.
+    Readable.from(file.buffer).pipe(uploadStream);
+
+    // Handle errors.
+    uploadStream.on('error', err => res.status(500).send({ error: err }));
+
+    // When the write to GridFS is complete, call the next middleware.
+    uploadStream.on('finish', () => { next(); });
+}
+
+async function readFile(req, res, next) {
+    const file = await db.collection('uploads.files').findOne({ filename: req.params.filename });
+
+    if (!file) {
+        return res.status(404).send('Not found');
+    }
+
+    req.file = file;
+
+    const downloadStream = gfs_bucket.openDownloadStreamByName(req.params.filename);
+
+    req.downloadStream = downloadStream;
+    next();
+}
+
 app.get("/", (req, res) => {
     res.send("Hello, world!");
 });
 
-app.get('/thing/:filename', async (req, res) => {
-    // TODO
+app.get('/thing/:filename', readFile, async (req, res) => {
+    res.status(200).type(req.file.metadata.contentType);
+    req.downloadStream.pipe(res);
 });
 
-app.post('/thing', upload.single('thingdata'), /* storeFile, */ (req, res) => {
+app.post('/thing', upload.single('thingdata'), storeFile, (req, res) => {
     console.log(`== Received ${req.file.mimetype} file: ${req.file.originalname}`);
     res.status(200).send("upload successful");
 });
@@ -44,6 +88,8 @@ app.get('/upload', (req, res) => {
 
 MongoClient.connect(mongoURL).then(function (client) {
     db = client.db(mongoDBName);
+
+    gfs_bucket = new GridFSBucket(db, { bucketName: 'uploads' });
 
     app.listen(port, function () {
         console.log("== Server listening on port", port);
