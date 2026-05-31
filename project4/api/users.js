@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
 const { requireAuthorization, tryAuthorization } = require('../lib/auth');
+const { getDbReference } = require('../lib/mongo');
 
 exports.router = router;
 
@@ -41,7 +42,7 @@ router.get('/:userid/businesses', requireAuthorization, async function (req, res
     return;
   }
 
-  const businessesCollection = req.app.locals.db.collection('businesses');
+  const businessesCollection = getDbReference().collection('businesses');
 
   const pipeline = [
     {
@@ -91,7 +92,7 @@ router.get('/:userid/reviews', requireAuthorization, async function (req, res, n
     return;
   }
 
-  const reviewsCollection = req.app.locals.db.collection('reviews');
+  const reviewsCollection = getDbReference().collection('reviews');
 
   const userReviews = await reviewsCollection.find({ userid: userid }).toArray();
   res.status(200).json({
@@ -119,7 +120,7 @@ router.get('/:userid/photos', requireAuthorization, async function (req, res, ne
     return;
   }
 
-  const photosColleciton = req.app.locals.db.collection('photos');
+  const photosColleciton = getDbReference().collection('photos');
 
   const userPhotos = await photosColleciton.find({ userid: userid }).toArray();
   res.status(200).json({
@@ -132,7 +133,7 @@ router.get('/:userid/photos', requireAuthorization, async function (req, res, ne
  */
 router.post('/', tryAuthorization, async function (req, res, next) {
   if (validateAgainstSchema(req.body, userSchema)) {
-    const collection = req.app.locals.db.collection("users");
+    const collection = getDbReference().collection("users");
 
     const newUser = extractValidFields(req.body, userSchema);
 
@@ -183,7 +184,7 @@ router.post('/:userid', async function (req, res, next) {
   const userid = new ObjectId(req.params.userid);
 
   if (validateAgainstSchema(req.body, loginSchema)) {
-    const collection = req.app.locals.db.collection("users");
+    const collection = getDbReference().collection("users");
     const loginDetails = extractValidFields(req.body, loginSchema);
 
     const user = await collection.findOne({ _id: userid });
@@ -237,7 +238,7 @@ router.get('/:userid', requireAuthorization, async function (req, res, next) {
     return;
   }
 
-  const collection = req.app.locals.db.collection("users");
+  const collection = getDbReference().collection("users");
 
   const user = await collection.findOne({ _id: userid });
   if (user) {

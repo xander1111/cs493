@@ -3,6 +3,7 @@ const { ObjectId } = require('mongodb');
 
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
 const { requireAuthorization } = require('../lib/auth');
+const { getDbReference } = require('../lib/mongo');
 
 const { reviews } = require('./reviews');
 const { photos } = require('./photos');
@@ -30,7 +31,7 @@ const businessSchema = {
  * Route to return a list of businesses.
  */
 router.get('/', async function (req, res) {
-  const collection = req.app.locals.db.collection('businesses');
+  const collection = getDbReference().collection('businesses');
 
   /*
    * Compute page number based on optional query string parameter `page`.
@@ -122,7 +123,7 @@ router.post('/', requireAuthorization, async function (req, res, next) {
       return;
     }
 
-    const collection = req.app.locals.db.collection('businesses');
+    const collection = getDbReference().collection('businesses');
 
     const result = await collection.insertOne(business);
 
@@ -151,7 +152,7 @@ router.get('/:businessid', async function (req, res, next) {
   }
   const businessid = new ObjectId(req.params.businessid);
 
-  const businessesCollection = req.app.locals.db.collection('businesses');
+  const businessesCollection = getDbReference().collection('businesses');
   const pipeline = [
     {
       $match: { _id: businessid }
@@ -193,7 +194,7 @@ router.put('/:businessid', requireAuthorization, async function (req, res, next)
   }
   const businessid = new ObjectId(req.params.businessid);
 
-  const businessesCollection = req.app.locals.db.collection('businesses');
+  const businessesCollection = getDbReference().collection('businesses');
   const business = await businessesCollection.findOne({ _id: businessid });
 
   if (business) {
@@ -252,7 +253,7 @@ router.delete('/:businessid', requireAuthorization, async function (req, res, ne
   }
   const businessid = new ObjectId(req.params.businessid);
 
-  const collection = req.app.locals.db.collection('businesses');
+  const collection = getDbReference().collection('businesses');
 
   const business = await collection.findOne({ _id: new ObjectId(businessid) });
 

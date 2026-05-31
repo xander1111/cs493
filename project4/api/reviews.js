@@ -3,6 +3,7 @@ const { ObjectId } = require('mongodb');
 
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
 const { requireAuthorization } = require('../lib/auth');
+const { getDbReference } = require('../lib/mongo');
 
 exports.router = router;
 
@@ -49,7 +50,7 @@ router.post('/', requireAuthorization, async function (req, res, next) {
       return;
     }
 
-    const reviewsCollection = req.app.locals.db.collection('reviews');
+    const reviewsCollection = getDbReference().collection('reviews');
 
     /*
      * Make sure the user is not trying to review the same business twice.
@@ -91,7 +92,7 @@ router.get('/:reviewID', async function (req, res, next) {
   }
   const reviewID = new ObjectId(req.params.reviewID);
 
-  const reviewsCollection = req.app.locals.db.collection('reviews');
+  const reviewsCollection = getDbReference().collection('reviews');
 
   const review = await reviewsCollection.findOne({ _id: reviewID });
 
@@ -114,7 +115,7 @@ router.put('/:reviewID', requireAuthorization, async function (req, res, next) {
   }
   const reviewID = new ObjectId(req.params.reviewID);
 
-  const reviewsCollection = req.app.locals.db.collection('reviews');
+  const reviewsCollection = getDbReference().collection('reviews');
   const review = await reviewsCollection.findOne({ _id: reviewID });
 
   if (review) {
@@ -188,7 +189,7 @@ router.delete('/:reviewID', requireAuthorization, async function (req, res, next
 
   const reviewID = new ObjectId(req.params.reviewID);
 
-  const collection = req.app.locals.db.collection('reviews');
+  const collection = getDbReference().collection('reviews');
 
   const review = await collection.findOne({ _id: new ObjectId(reviewID) });
 

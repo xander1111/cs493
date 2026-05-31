@@ -15,6 +15,9 @@ const mongoUrl = `mongodb://${mongoUser}:${mongoPassword}@${mongoHost}:${mongoPo
 
 let db = null
 let _closeDbConnection = null
+
+let photosBucket = null
+
 exports.connectToDb = function (callback) {
   MongoClient.connect(mongoUrl, function (err, client) {
     if (err) {
@@ -26,6 +29,8 @@ exports.connectToDb = function (callback) {
     }
     callback()
   })
+
+  photosBucket = new GridFSBucket(db, { bucketName: 'photos' });
 }
 
 exports.getDbReference = function () {
@@ -34,4 +39,8 @@ exports.getDbReference = function () {
 
 exports.closeDbConnection = function (callback) {
   _closeDbConnection(callback)
+}
+
+exports.getPhotosBucket = function () {
+  return photosBucket
 }

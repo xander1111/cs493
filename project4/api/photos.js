@@ -3,6 +3,8 @@ const { ObjectId } = require('mongodb');
 
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
 const { requireAuthorization } = require('../lib/auth');
+const { photoUploader: uploader } = require('../lib/multer');
+const { getDbReference } = require('../lib/mongo');
 
 exports.router = router;
 
@@ -16,10 +18,19 @@ const photoSchema = {
 };
 
 
+function storePhoto(req, res, next) {
+  const file = req.file;
+
+  // const uploadStream = gfs_bucket.openUploadStream(file.originalname, {
+  //   metadata: { contentType: file.mimetype },
+  // });
+}
+
+
 /*
  * Route to create a new photo.
  */
-router.post('/', requireAuthorization, async function (req, res, next) {
+router.post('/', requireAuthorization, uploader.single('file'), storePhoto, async function (req, res, next) {
   if (validateAgainstSchema(req.body, photoSchema)) {
     let photo = extractValidFields(req.body, photoSchema);
 
@@ -46,7 +57,7 @@ router.post('/', requireAuthorization, async function (req, res, next) {
       return;
     }
 
-    const photosCollection = req.app.locals.db.collection('photos');
+    const photosCollection = getDbReference().collection('photos');
 
     const result = await photosCollection.insertOne(photo);
 
@@ -76,7 +87,7 @@ router.get('/:photoID', async function (req, res, next) {
   }
   const photoID = new ObjectId(req.params.photoID);
 
-  const photosCollection = req.app.locals.db.collection('photos');
+  const photosCollection = getDbReference().collection('photos');
 
   const photo = await photosCollection.findOne({ _id: photoID });
 
@@ -99,7 +110,7 @@ router.put('/:photoID', requireAuthorization, async function (req, res, next) {
   }
   const photoID = new ObjectId(req.params.photoID);
 
-  const photosCollection = req.app.locals.db.collection('photos');
+  const photosCollection = getDbReference().collection('photos');
 
   const photo = await photosCollection.findOne({ _id: photoID });
 
@@ -175,7 +186,7 @@ router.delete('/:photoID', requireAuthorization, async function (req, res, next)
   }
   const photoID = new ObjectId(req.params.photoID);
 
-  const collection = req.app.locals.db.collection('photos');
+  const collection = getDbReference().collection('photos');
 
   const photo = await collection.findOne({ _id: new ObjectId(photoID) });
 
