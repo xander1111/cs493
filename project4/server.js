@@ -11,8 +11,6 @@ const port = process.env.PORT || 8000;
 
 
 connectToDb(() => {
-  getDbReference();
-
   app.listen(port, () => {
     console.log(`Server is listening on port ${port}`);
   });

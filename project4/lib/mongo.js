@@ -2,16 +2,15 @@
  * Module for working with a MongoDB connection.
  */
 
-const { MongoClient } = require('mongodb')
+const { MongoClient, GridFSBucket } = require('mongodb')
 
 const mongoHost = process.env.MONGO_HOST || 'localhost'
 const mongoPort = process.env.MONGO_PORT || 27017
 const mongoUser = process.env.MONGO_USER
-const mongoPassword = process.env.MONGO_PASSWORD
-const mongoDbName = process.env.MONGO_DB_NAME
-const mongoAuthDbName = process.env.MONGO_AUTH_DB_NAME || mongoDbName
+const mongoPassword = process.env.MONGO_USER_PASSWORD
+const mongoDbName = process.env.MONGO_INITDB_DATABASE
 
-const mongoUrl = `mongodb://${mongoUser}:${mongoPassword}@${mongoHost}:${mongoPort}/${mongoAuthDbName}`
+const mongoUrl = `mongodb://${mongoUser}:${mongoPassword}@${mongoHost}:${mongoPort}/${mongoDbName}`
 
 let db = null
 let _closeDbConnection = null
@@ -19,18 +18,16 @@ let _closeDbConnection = null
 let photosBucket = null
 
 exports.connectToDb = function (callback) {
-  MongoClient.connect(mongoUrl, function (err, client) {
-    if (err) {
-      throw err
-    }
+  MongoClient.connect(mongoUrl).then(function (client) {
     db = client.db(mongoDbName)
     _closeDbConnection = function () {
       client.close()
     }
+
+    photosBucket = new GridFSBucket(db, { bucketName: 'photos' });
+
     callback()
   })
-
-  photosBucket = new GridFSBucket(db, { bucketName: 'photos' });
 }
 
 exports.getDbReference = function () {

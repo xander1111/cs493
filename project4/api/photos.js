@@ -1,10 +1,11 @@
 const router = require('express').Router();
 const { ObjectId } = require('mongodb');
+const { Readable } = require('node:stream');
 
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
 const { requireAuthorization } = require('../lib/auth');
 const { photoUploader: uploader } = require('../lib/multer');
-const { getDbReference } = require('../lib/mongo');
+const { getDbReference, getPhotosBucket } = require('../lib/mongo');
 
 exports.router = router;
 
@@ -17,22 +18,13 @@ const photoSchema = {
   caption: { required: false }
 };
 
-
-function storePhoto(req, res, next) {
-  const file = req.file;
-
-  // const uploadStream = gfs_bucket.openUploadStream(file.originalname, {
-  //   metadata: { contentType: file.mimetype },
-  // });
-}
-
-
 /*
  * Route to create a new photo.
  */
-router.post('/', requireAuthorization, uploader.single('file'), storePhoto, async function (req, res, next) {
+router.post('/', requireAuthorization, uploader.single('file'), async function (req, res, next) {
   if (validateAgainstSchema(req.body, photoSchema)) {
     let photo = extractValidFields(req.body, photoSchema);
+    const file = req.file;
 
     if (!ObjectId.isValid(photo.businessid)) {
       res.status(400).json({
@@ -40,7 +32,7 @@ router.post('/', requireAuthorization, uploader.single('file'), storePhoto, asyn
       });
       return;
     }
-    photo.businessid = new ObjectId(photo.businessid);
+    let businessid = new ObjectId(photo.businessid);
 
     if (!ObjectId.isValid(photo.userid)) {
       res.status(400).json({
@@ -48,25 +40,42 @@ router.post('/', requireAuthorization, uploader.single('file'), storePhoto, asyn
       });
       return;
     }
-    photo.userid = new ObjectId(photo.userid);
+    let userid = new ObjectId(photo.userid);
 
-    if (req.locals.userid !== photo.userid.toString() && !req.locals.admin) {
+    if (req.locals.userid !== userid.toString() && !req.locals.admin) {
       res.status(400).json({
         "error": "authenticated user does not match photo user id"
       });
       return;
     }
 
-    const photosCollection = getDbReference().collection('photos');
+    const uploadStream = getPhotosBucket().openUploadStream(file.originalname, {
+      metadata: {
+        contentType: file.mimetype,
+        userid: photo.userid,
+        businessid: photo.businessid,
+        caption: photo.caption,
+      },
+    });
 
-    const result = await photosCollection.insertOne(photo);
+    Readable.from(file.buffer).pipe(uploadStream);
 
-    res.status(201).json({
-      id: result.insertedId,
-      links: {
-        photo: `/photos/${result.insertedId}`,
-        business: `/businesses/${photo.businessid}`
-      }
+    // Handle errors.
+    uploadStream.on('error', err => {
+      res.status(500).send({ error: err });
+      return;
+    });
+
+    // When the write to GridFS is complete, call the next middleware.
+    uploadStream.on('finish', () => {
+      res.status(201).json({
+        id: uploadStream.id,
+        links: {
+          photo: `/photos/${uploadStream.id}`,
+          file: `/media/photos/${uploadStream.id}`,
+          business: `/businesses/${photo.businessid}`
+        }
+      });
     });
   } else {
     res.status(400).json({
