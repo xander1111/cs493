@@ -32,7 +32,7 @@ router.post('/', requireAuthorization, uploader.single('file'), async function (
       });
       return;
     }
-    let businessid = new ObjectId(photo.businessid);
+    const businessid = new ObjectId(photo.businessid);
 
     if (!ObjectId.isValid(photo.userid)) {
       res.status(400).json({
@@ -40,7 +40,7 @@ router.post('/', requireAuthorization, uploader.single('file'), async function (
       });
       return;
     }
-    let userid = new ObjectId(photo.userid);
+    const userid = new ObjectId(photo.userid);
 
     if (req.locals.userid !== userid.toString() && !req.locals.admin) {
       res.status(400).json({
@@ -72,7 +72,7 @@ router.post('/', requireAuthorization, uploader.single('file'), async function (
         id: uploadStream.id,
         links: {
           photo: `/photos/${uploadStream.id}`,
-          file: `/media/photos/${uploadStream.id}`,
+          download: `/media/photos/${uploadStream.id}`,
           business: `/businesses/${photo.businessid}`
         }
       });
@@ -96,9 +96,14 @@ router.get('/:photoID', async function (req, res, next) {
   }
   const photoID = new ObjectId(req.params.photoID);
 
-  const photosCollection = getDbReference().collection('photos');
+  const photosBucket = getPhotosBucket();
 
-  const photo = await photosCollection.findOne({ _id: photoID });
+  let photo = await photosBucket.findOne({ _id: photoID });
+
+  photo.links = {
+    download: `/media/photos/${photo.id}`,
+    business: `/businesses/${photo.businessid}`
+  }
 
   if (photo) {
     res.status(200).json(photo);
