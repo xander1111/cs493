@@ -5,7 +5,7 @@ const { Readable } = require('node:stream');
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
 const { requireAuthorization } = require('../lib/auth');
 const { photoUploader: uploader } = require('../lib/multer');
-const { getDbReference, getPhotosBucket } = require('../lib/mongo');
+const { getDbReference, getPhotosBucket, getPhotosCollection } = require('../lib/mongo');
 
 exports.router = router;
 
@@ -96,9 +96,7 @@ router.get('/:photoID', async function (req, res, next) {
   }
   const photoID = new ObjectId(req.params.photoID);
 
-  const photosBucket = getPhotosBucket();
-
-  let photo = await photosBucket.findOne({ _id: photoID });
+  let photo = await getPhotosCollection().findOne({ _id: photoID });
 
   photo.links = {
     download: `/media/photos/${photo.id}`,

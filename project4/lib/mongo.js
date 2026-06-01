@@ -16,15 +16,17 @@ let db = null
 let _closeDbConnection = null
 
 let photosBucket = null
+let photoFilesCollection = null
 
 exports.connectToDb = function (callback) {
-  MongoClient.connect(mongoUrl).then(function (client) {
+  MongoClient.connect(mongoUrl).then(async function (client) {
     db = client.db(mongoDbName)
     _closeDbConnection = function () {
       client.close()
     }
 
     photosBucket = new GridFSBucket(db, { bucketName: 'photos' });
+    photoFilesCollection = await db.collection('photos.files');
 
     callback()
   })
@@ -40,4 +42,8 @@ exports.closeDbConnection = function (callback) {
 
 exports.getPhotosBucket = function () {
   return photosBucket
+}
+
+exports.getPhotoFilesCollection = function () {
+  return photoFilesCollection
 }
