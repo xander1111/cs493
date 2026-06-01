@@ -53,8 +53,8 @@ router.post('/', requireAuthorization, uploader.single('file'), async function (
     const uploadStream = getPhotosBucket().openUploadStream(file.originalname, {
       metadata: {
         contentType: file.mimetype,
-        userid: photo.userid,
-        businessid: photo.businessid,
+        userid: userid,
+        businessid: businessid,
         caption: photo.caption,
       },
     });

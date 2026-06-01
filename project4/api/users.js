@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
 const { requireAuthorization, tryAuthorization } = require('../lib/auth');
-const { getDbReference } = require('../lib/mongo');
+const { getDbReference, getPhotoFilesCollection } = require('../lib/mongo');
 
 exports.router = router;
 
@@ -120,9 +120,19 @@ router.get('/:userid/photos', requireAuthorization, async function (req, res, ne
     return;
   }
 
-  const photosColleciton = getDbReference().collection('photos');
+  const photosColleciton = getPhotoFilesCollection();
 
-  const userPhotos = await photosColleciton.find({ userid: userid }).toArray();
+  let userPhotos = (await photosColleciton.find({ 'metadata.userid': userid }).toArray())
+    .map(photo => photo.metadata);
+
+    userPhotos.forEach(photo => {
+      photo.links = {
+        "download": `/media/photos/${photo.id}`,
+        "thumbnail": `/media/thumbs/${photo.id}`,
+        "business": `/businesses/${photo.businessid}`
+      };
+    });
+
   res.status(200).json({
     photos: userPhotos
   });

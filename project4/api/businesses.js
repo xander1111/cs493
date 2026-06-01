@@ -53,10 +53,21 @@ router.get('/', async function (req, res) {
   const pipeline = [
     {
       $lookup: {
-        from: "photos",
+        from: "photos.files",
         localField: "_id",
-        foreignField: "businessid",
+        foreignField: "metadata.businessid",
         as: "photos"
+      }
+    },
+    {
+      $set: {
+        photos: {
+          $map: {
+            input: "$photos",
+            as: "photo",
+            in: "$$photo.metadata"
+          }
+        }
       }
     },
     {
@@ -159,10 +170,21 @@ router.get('/:businessid', async function (req, res, next) {
     },
     {
       $lookup: {
-        from: "photos",
+        from: "photos.files",
         localField: "_id",
-        foreignField: "businessid",
+        foreignField: "metadata.businessid",
         as: "photos"
+      }
+    },
+    {
+      $set: {
+        photos: {
+          $map: {
+            input: "$photos",
+            as: "photo",
+            in: "$$photo.metadata"
+          }
+        }
       }
     },
     {
