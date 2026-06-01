@@ -106,6 +106,7 @@ router.get('/:photoID', async function (req, res, next) {
 
   photo.links = {
     download: `/media/photos/${photo.id}`,
+    thumbnail: `/media/thumbs/${photo.id}`,
     business: `/businesses/${photo.businessid}`
   }
 

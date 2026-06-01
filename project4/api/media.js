@@ -34,19 +34,19 @@ router.get('/photos/:photoid', async (req, res, next) => {
 });
 
 
-router.get('/thumbs/:thumbid', async (req, res, next) => {
-    if (!ObjectId.isValid(req.params.thumbid)) {
+router.get('/thumbs/:photoid', async (req, res, next) => {
+    if (!ObjectId.isValid(req.params.photoid)) {
         res.status(400).json({
-            error: "Invalid thumbid"
+            error: "Invalid photoid"
         });
         return;
     }
-    const thumbid = new ObjectId(req.params.thumbid);
+    const photoid = new ObjectId(req.params.photoid);
 
-    const file = await getThumbFilesCollection().findOne({ _id: thumbid });
+    const photoFile = await getPhotoFilesCollection().findOne({ _id: photoid });
 
-    if (file) {
-        const downloadStream = getThumbsBucket().openDownloadStream(thumbid);
+    if (photoFile) {
+        const downloadStream = getThumbsBucket().openDownloadStream(photoFile.thumbid);
 
         downloadStream.on('error', err => {
             res.status(500).send({ error: err });

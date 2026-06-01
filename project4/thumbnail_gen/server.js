@@ -34,7 +34,7 @@ async function processImage(id) {
 
     const downloadStream = photosBucket.openDownloadStream(id);
 
-    const uploadStream = thumbsBucket.openUploadStream(`thumb-${id}.jpg`, {
+    const uploadStream = thumbsBucket.openUploadStream(`${id}-thumb.jpg`, {
         contentType: 'image/jpeg',
         metadata: { originalid: id }
     })
