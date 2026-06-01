@@ -5,14 +5,17 @@ const api = require('./api');
 
 const { MongoClient, ObjectId } = require('mongodb');
 const { connectToDb, getDbReference } = require('./lib/mongo');
+const { connectToQueue } = require('./lib/rabbitmq');
 
 const app = express();
 const port = process.env.PORT || 8000;
 
 
 connectToDb(() => {
-  app.listen(port, () => {
-    console.log(`Server is listening on port ${port}`);
+  connectToQueue(() => {
+    app.listen(port, () => {
+      console.log(`Server is listening on port ${port}`);
+    });
   });
 });
 
@@ -45,7 +48,7 @@ app.use('*', function (req, res, next) {
 app.use('*', function (err, req, res, next) {
   console.error("== Error:", err)
   res.status(500).send({
-      err: "Server error.  Please try again later."
+    err: "Server error.  Please try again later."
   })
 })
 

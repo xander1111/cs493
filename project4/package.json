@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/osu-cs493-sp22/template-assignment-2#readme",
   "dependencies": {
+    "amqplib": "^2.0.1",
     "bcryptjs": "^3.0.3",
     "express": "^4.17.3",
     "jsonwebtoken": "^9.0.3",

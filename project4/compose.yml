@@ -22,6 +22,12 @@ services:
       mongo-server:
         condition: service_healthy
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
   api-server:
     build: .
     ports:
@@ -30,6 +36,7 @@ services:
       - example.env
     environment:
       MONGO_HOST: "mongo-server"
+      RABBITMQ_HOST: "rabbitmq"
     depends_on:
       mongo-init:
         condition: service_completed_successfully

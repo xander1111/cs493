@@ -6,6 +6,7 @@ const { validateAgainstSchema, extractValidFields } = require('../lib/validation
 const { requireAuthorization } = require('../lib/auth');
 const { photoUploader: uploader } = require('../lib/multer');
 const { getDbReference, getPhotosBucket, getPhotosCollection } = require('../lib/mongo');
+const { createChannel } = require('../lib/rabbitmq');
 
 exports.router = router;
 
@@ -67,7 +68,7 @@ router.post('/', requireAuthorization, uploader.single('file'), async function (
     });
 
     // When the write to GridFS is complete, call the next middleware.
-    uploadStream.on('finish', () => {
+    uploadStream.on('finish', async () => {
       res.status(201).json({
         id: uploadStream.id,
         links: {
@@ -76,6 +77,11 @@ router.post('/', requireAuthorization, uploader.single('file'), async function (
           business: `/businesses/${photo.businessid}`
         }
       });
+
+      // Queue thumbnail generation to be done offline
+      const channel = await createChannel('thumbnail_gen');
+      channel.sendToQueue('thumbnail_gen', Buffer.from(uploadStream.id.toString()));
+      channel.close();
     });
   } else {
     res.status(400).json({
