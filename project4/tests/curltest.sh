@@ -258,6 +258,7 @@ display_response() {
 
 request() {
     local log_message url payload expected_response method token
+    local upload_file form_fields multipart_args form_field_escaped upload_file_escaped
     local content_type="$default_content_type"
     local expected_code="$default_expected_code"
 
@@ -284,6 +285,15 @@ request() {
                 ;;
             -p|--payload)
                 payload="$2"
+                shift
+                ;;
+            -f|--file)
+                upload_file="$2"
+                shift
+                ;;
+            -F|--form-field)
+                form_field_escaped=$(printf "%s" "$2" | sed "s/'/'\\\\''/g")
+                form_fields="$form_fields -F '$form_field_escaped'"
                 shift
                 ;;
             --expect*-code)
@@ -316,7 +326,7 @@ request() {
     fi
 
     if [ -z "$method" ]; then
-        if [ -z "$payload" ]; then
+        if [ -z "$payload" -a -z "$upload_file" -a -z "$form_fields" ]; then
             method="GET"
         else
             method="POST"
@@ -326,6 +336,9 @@ request() {
     url="${default_base_url}${url}"
 
     request="$payload"
+    if [ ! -z "$upload_file" -o ! -z "$form_fields" ]; then
+        request="[multipart form data]"
+    fi
 
     payload_escaped=$(printf "%s" "$payload" | sed "s/'/'\\\\''/g")
 
@@ -341,10 +354,20 @@ request() {
 
     case "$method" in
         POST|PUT|PATCH|DELETE)
-            contentarg="-H 'Content-Type: $content_type'"
-            payloadarg="-d '$payload_escaped'"
+            if [ -z "$upload_file" -a -z "$form_fields" ]; then
+                contentarg="-H 'Content-Type: $content_type'"
+                payloadarg="-d '$payload_escaped'"
+            fi
             ;;
     esac
+
+    if [ ! -z "$upload_file" -o ! -z "$form_fields" ]; then
+        multipart_args="$form_fields"
+        if [ ! -z "$upload_file" ]; then
+            upload_file_escaped=$(printf "%s" "$upload_file" | sed "s/'/'\\\\''/g")
+            multipart_args="$multipart_args -F 'file=@$upload_file_escaped'"
+        fi
+    fi
 
     json_test_flag=""
     test "$content_type" = "application/json" && json_test_flag="-j"
@@ -362,7 +385,7 @@ request() {
         autharg="-H 'Authorization: Bearer ${token}'"
     fi
 
-    cmd="curl -s $autharg $methodarg $contentarg $payloadarg '$url' -o '$tempfile' -w '%{http_code}'"
+    cmd="curl -s $autharg $methodarg $contentarg $payloadarg $multipart_args '$url' -o '$tempfile' -w '%{http_code}'"
     #echo ==============================
     #echo $cmd
     #echo ==============================

@@ -237,37 +237,74 @@ request "/businesses/$id" \
 #########################################################################
 status "Testing Photos"
 
+photo_upload_file="test_images/test.png"
+
+if [ ! -f "$photo_upload_file" ]; then
+    warning "Required upload fixture missing: $photo_upload_file"
+    exit 1
+fi
+
 request "/photos" \
     -l "Posting a new photo without authentication" \
-    -p '{"userid":"'$userid'","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","caption":"Test caption"}' \
+    -f "$photo_upload_file" \
+    -F "userid=$userid" \
+    -F "businessid=bbbbbbbbbbbbbbbbbbbbbbbb" \
+    -F "caption=Test caption" \
     --expect-code 401 \
 
 request "/photos" \
     -l "Posting a new photo with invalid businessid" \
-    -p '{"userid":"'$userid'","businessid":"1","caption":"Test caption"}' \
+    -f "$photo_upload_file" \
+    -F "userid=$userid" \
+    -F "businessid=1" \
+    -F "caption=Test caption" \
     -a "$token" \
     --expect-code 400 \
 
 request "/photos" \
     -l "Posting a new photo with invalid userid" \
-    -p '{"userid":"1","businessid":"1","caption":"Test caption"}' \
+    -f "$photo_upload_file" \
+    -F "userid=1" \
+    -F "businessid=1" \
+    -F "caption=Test caption" \
     -a "$token" \
     --expect-code 400 \
 
 request "/photos" \
     -l "Posting a new photo with different userid" \
-    -p '{"userid":"aaaaaaaaaaaaaaaaaaaaaaa0","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","caption":"Test caption"}' \
+    -f "$photo_upload_file" \
+    -F "userid=aaaaaaaaaaaaaaaaaaaaaaa0" \
+    -F "businessid=bbbbbbbbbbbbbbbbbbbbbbbb" \
+    -F "caption=Test caption" \
     -a "$token" \
     --expect-code 400 \
 
 request "/photos" \
     -l "Posting a new photo" \
-    -p '{"userid":"'$userid'","businessid":"bbbbbbbbbbbbbbbbbbbbbbbb","caption":"Test caption"}' \
+    -f "$photo_upload_file" \
+    -F "userid=$userid" \
+    -F "businessid=bbbbbbbbbbbbbbbbbbbbbbbb" \
+    -F "caption=Test caption" \
     -a "$token" \
     --expect-code 201 \
 
 photoid=$(extract_field id)
 info "Got ID $photoid"
+
+
+request "/media/photos/$photoid" \
+    -l "Verifying photo $photoid exists" \
+    --expect-code 200 \
+
+
+status "Waiting for thumbnail to generate"
+
+sleep 5
+
+
+request "/media/thumbs/$photoid" \
+    -l "Verifying thumb $photoid exists" \
+    --expect-code 200 \
 
 
 request "/photos/999" \
@@ -377,6 +414,14 @@ request "/photos/$photoid" \
 
 request "/photos/$photoid" \
     -l "Verifying photo $photoid deleted" \
+    --expect-code 404 \
+
+request "/media/photos/$photoid" \
+    -l "Verifying photo $photoid deleted" \
+    --expect-code 404 \
+
+request "/media/thumbs/$photoid" \
+    -l "Verifying thumb $photoid deleted" \
     --expect-code 404 \
 
 #########################################################################
@@ -593,6 +638,26 @@ request "/users/$userid/reviews" \
     -l "Searching for reviews under specific user" \
     -a "$token" \
     --expect-code 200 \
+
+#########################################################################
+status "Testing media items"
+
+request "/media/photos/123" \
+    -l "Searching for media/photo with invalid id" \
+    --expect-code 400 \
+
+request "/media/thumbs/123" \
+    -l "Searching for media/thumb with invalid id" \
+    --expect-code 400 \
+
+
+request "/media/photos/000000000000000000000000" \
+    -l "Searching for non-existant media/photo" \
+    --expect-code 404 \
+
+request "/media/thumbs/000000000000000000000000" \
+    -l "Searching for non-existant media/thumb" \
+    --expect-code 404 \
 
 summary
 

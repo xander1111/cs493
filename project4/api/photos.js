@@ -5,7 +5,7 @@ const { Readable } = require('node:stream');
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
 const { requireAuthorization } = require('../lib/auth');
 const { photoUploader: uploader } = require('../lib/multer');
-const { getDbReference, getPhotosBucket, getPhotoFilesCollection } = require('../lib/mongo');
+const { getDbReference, getPhotosBucket, getPhotoFilesCollection, getThumbsBucket } = require('../lib/mongo');
 const { createChannel } = require('../lib/rabbitmq');
 
 exports.router = router;
@@ -131,12 +131,12 @@ router.put('/:photoID', requireAuthorization, async function (req, res, next) {
   }
   const photoID = new ObjectId(req.params.photoID);
 
-  const photosCollection = getDbReference().collection('photos');
-
-  const photo = await photosCollection.findOne({ _id: photoID });
+  const photosCollection = getPhotoFilesCollection();
+  let photo = await photosCollection.findOne({ _id: photoID });
 
   if (photo) {
     if (validateAgainstSchema(req.body, photoSchema)) {
+      photo = photo.metadata
       /*
        * Make sure the updated photo has the same businessid and userid as
        * the existing photo.
@@ -166,16 +166,17 @@ router.put('/:photoID', requireAuthorization, async function (req, res, next) {
         return;
       }
 
-      const existingPhoto = await photosCollection.findOne({ _id: photoID });
-
-      if (newPhoto && (!newPhoto.businessid.equals(existingPhoto.businessid) || !newPhoto.userid.equals(existingPhoto.userid)) && !req.locals.admin) {
+      if (newPhoto && (!newPhoto.businessid.equals(photo.businessid) || !newPhoto.userid.equals(photo.userid)) && !req.locals.admin) {
         res.status(400).json({
           error: "Updated photo cannot modify businessid or userid"
         });
         return;
       }
 
-      const result = await photosCollection.replaceOne({ _id: photoID }, newPhoto);
+      // Changed from replaceOne to updateOne to not interfere with GridFS values
+      const result = await photosCollection.updateOne({ _id: photoID }, {
+        $set: { metadata: newPhoto }
+      });
 
       res.status(200).json({
         links: {
@@ -207,27 +208,30 @@ router.delete('/:photoID', requireAuthorization, async function (req, res, next)
   }
   const photoID = new ObjectId(req.params.photoID);
 
-  const collection = getDbReference().collection('photos');
+  const bucket = getPhotosBucket();
+  const collection = getPhotoFilesCollection();
 
-  const photo = await collection.findOne({ _id: new ObjectId(photoID) });
+  let photoDetails = await collection.findOne({ _id: photoID });
 
-  if (!photo) {
+  if (!photoDetails) {
     next();  // Returns 404 error
     return;
   }
 
-  if (req.locals.userid !== photo.userid.toString()) {
+  photoDetails = photoDetails.metadata;
+
+  if (req.locals.userid !== photoDetails.userid.toString()) {
     res.status(401).json({
       "error": "user not authorized to delete photo, authenticated user does not match photo user id"
     });
     return;
   }
 
-  const result = await collection.deleteOne({ _id: photoID });
+  const resultPhoto = await bucket.delete(photoID);
 
-  if (result.deletedCount > 0) {
-    res.status(204).end();
-  } else {
-    next();
+  if (photoDetails.thumbid) {
+    const resultThumb = await getThumbsBucket().delete(photoDetails.thumbid);
   }
+
+  res.status(204).end();
 });
