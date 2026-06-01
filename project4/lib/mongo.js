@@ -18,6 +18,9 @@ let _closeDbConnection = null
 let photosBucket = null
 let photoFilesCollection = null
 
+let thumbsBucket = null
+let thumbFilesCollection = null
+
 exports.connectToDb = function (callback) {
   MongoClient.connect(mongoUrl).then(async function (client) {
     db = client.db(mongoDbName)
@@ -27,6 +30,9 @@ exports.connectToDb = function (callback) {
 
     photosBucket = new GridFSBucket(db, { bucketName: 'photos' });
     photoFilesCollection = await db.collection('photos.files');
+
+    thumbsBucket = new GridFSBucket(db, { bucketName: 'thumbs' });
+    thumbFilesCollection = await db.collection('thumbs.files');
 
     callback()
   })
@@ -47,3 +53,12 @@ exports.getPhotosBucket = function () {
 exports.getPhotoFilesCollection = function () {
   return photoFilesCollection
 }
+
+exports.getThumbsBucket = function () {
+  return thumbsBucket
+}
+
+exports.getThumbFilesCollection = function () {
+  return thumbFilesCollection
+}
+
