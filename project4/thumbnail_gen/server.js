@@ -40,7 +40,7 @@ async function processImage(id) {
     })
 
     downloadStream.on('error', err => {
-        res.status(500).send({ error: err });
+        console.log(`Error: ${err}`);
         return;
     });
 
@@ -51,7 +51,7 @@ async function processImage(id) {
     await pipeline(downloadStream, resizeStream, uploadStream);
 
     photoFilesCollection.updateOne({ _id: id }, {
-        $set: { thumbid: uploadStream.id }
+        $set: { 'metadata.thumbid': uploadStream.id }
     });}
 
 
@@ -61,9 +61,14 @@ async function main() {
         const channel = await connection.createChannel();
         await channel.assertQueue('thumbnail_gen');
 
+        console.log("Thumbnail gen server started");
+
         channel.consume('thumbnail_gen', (msg) => {
             if (msg) {
-                processImage(new ObjectId(msg.content.toString));
+                const imageid = msg.content.toString();
+                console.log(`Creating thumbnail for image ${imageid}`);
+                
+                processImage(new ObjectId(imageid));
             }
 
             channel.ack(msg);

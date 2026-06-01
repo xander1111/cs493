@@ -50,8 +50,11 @@ services:
         condition: service_healthy
 
   thumbnail-gen:
-    build: ./thumbnail-gen
+    build: ./thumbnail_gen
+    env_file:
+      - example.env
     environment:
+      MONGO_HOST: "mongo-server"
       RABBITMQ_HOST: "rabbitmq"
     depends_on:
       rabbitmq:

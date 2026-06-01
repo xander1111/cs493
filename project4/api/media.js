@@ -46,15 +46,21 @@ router.get('/thumbs/:photoid', async (req, res, next) => {
     const photoFile = await getPhotoFilesCollection().findOne({ _id: photoid });
 
     if (photoFile) {
-        const downloadStream = getThumbsBucket().openDownloadStream(photoFile.thumbid);
+        const thumbFile = await getThumbFilesCollection().findOne({ _id: photoFile.metadata.thumbid });
 
-        downloadStream.on('error', err => {
-            res.status(500).send({ error: err });
-            return;
-        });
+        if (thumbFile) {
+            const downloadStream = getThumbsBucket().openDownloadStream(photoFile.metadata.thumbid);
 
-        res.status(200).type(file.metadata.contentType);
-        downloadStream.pipe(res);
+            downloadStream.on('error', err => {
+                res.status(500).send({ error: err });
+                return;
+            });
+
+            res.status(200).type('image/jpeg');
+            downloadStream.pipe(res);
+        } else {
+            next();
+        }
     } else {
         next();
     }

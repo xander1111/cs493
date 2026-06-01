@@ -6,6 +6,7 @@ let connection = null;
 
 exports.connectToQueue = async function (callback) {
     connection = await amqp.connect(rabbitmqUrl);
+    callback();
 };
 
 exports.createChannel = async function (queue) {

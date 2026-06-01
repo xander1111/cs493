@@ -5,7 +5,7 @@ const { Readable } = require('node:stream');
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
 const { requireAuthorization } = require('../lib/auth');
 const { photoUploader: uploader } = require('../lib/multer');
-const { getDbReference, getPhotosBucket, getPhotosCollection } = require('../lib/mongo');
+const { getDbReference, getPhotosBucket, getPhotoFilesCollection } = require('../lib/mongo');
 const { createChannel } = require('../lib/rabbitmq');
 
 exports.router = router;
@@ -100,17 +100,19 @@ router.get('/:photoID', async function (req, res, next) {
     });
     return;
   }
-  const photoID = new ObjectId(req.params.photoID);
+  const photoid = new ObjectId(req.params.photoID);
 
-  let photo = await getPhotosCollection().findOne({ _id: photoID });
+  const file = await getPhotoFilesCollection().findOne({ _id: photoid });
 
-  photo.links = {
-    download: `/media/photos/${photo.id}`,
-    thumbnail: `/media/thumbs/${photo.id}`,
-    business: `/businesses/${photo.businessid}`
-  }
+  if (file) {
+    let photo = file.metadata;
+    photo.links = {
+      download: `/media/photos/${photoid}`,
+      thumbnail: `/media/thumbs/${photoid}`,
+      business: `/businesses/${photo.businessid}`
+    }
+    photo.thumbid = undefined;  // Don't display thumbid
 
-  if (photo) {
     res.status(200).json(photo);
   } else {
     next();
